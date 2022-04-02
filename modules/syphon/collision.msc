@@ -1,0 +1,36 @@
+(define-module (syphon collision)
+  (import (mesche list)
+          (substratic physics)
+          (syphon enemy)
+          (syphon player)
+          (syphon bullet)))
+
+(define (check-collisions player enemies bullets hit-enemy-func) :export
+  (let next-bullet ((bullets bullets))
+    ;; Check for sphere of bullet vs sphere of entity
+    (if (pair? bullets)
+        (let ((bullet (car bullets)))
+          (if (equal? (bullet-owner bullet) 'player)
+              ;; Check for collisions against enemies
+              (let next-enemy ((enemies enemies))
+                (if (pair? enemies)
+                    (begin
+                      (if (sphere-intersect? (bullet-sphere bullet)
+                                             (enemy-sphere (car enemies)))
+                          (begin
+                            (bullet-alive-set! bullet nil)
+                            (enemy-shield-set! (car enemies)
+                                               (- (enemy-shield (car enemies))
+                                                  (bullet-damage bullet)))
+                            (hit-enemy-func (car enemies))))
+                      (next-enemy (cdr enemies)))))
+
+              (if (equal? (bullet-owner bullet) 'enemy)
+                  (if (sphere-intersect? (bullet-sphere bullet)
+                                         (player-sphere player))
+                      (begin
+                        (bullet-alive-set! bullet nil)
+                        (player-shield-amount-set! player
+                                                   (- (player-shield-amount player)
+                                                      (bullet-damage bullet)))))))
+          (next-bullet (cdr bullets))))))

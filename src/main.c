@@ -11,9 +11,8 @@ int main(int argc, char **argv) {
   // Set up load paths and load core modules
 #ifdef DEV_BUILD
   mesche_vm_load_path_add(&vm, "./deps/substratic/engine/modules");
-#else
-  mesche_vm_load_path_add(&vm, "./modules");
 #endif
+  mesche_vm_load_path_add(&vm, "./modules");
   mesche_vm_register_core_modules(&vm);
 
   // Initialize the Substratic library in Mesche

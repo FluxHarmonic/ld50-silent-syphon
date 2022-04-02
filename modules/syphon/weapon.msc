@@ -1,0 +1,23 @@
+(define-module (syphon weapon)
+  (import (syphon bullet)
+          (substratic physics)))
+
+(define-record-type weapon
+  (fields damage
+          bullet-speed
+          fire-rate
+          fire-time))
+
+(define (fire-weapon weapon x y y-dir time-delta owner) :export
+  (make-bullet :x x :y y
+               :alive t
+               :vel-y (* y-dir (weapon-bullet-speed weapon))
+               :sphere (make-sphere x y (/ bullet-size 2))
+               :damage (weapon-damage weapon)
+               :owner owner))
+
+(define blaster-weapon
+  (make-weapon :damage 20
+               :bullet-speed 700
+               :fire-rate 1
+               :fire-time 0) :export)

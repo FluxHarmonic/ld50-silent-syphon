@@ -1,4 +1,4 @@
-(define-module (silent-syphon main)
+(define-module (syphon main)
   (import (mesche array)
           (mesche math)
           (mesche list)
@@ -10,14 +10,21 @@
           (substratic window)
           (substratic physics)
           (substratic texture)
-          (substratic renderer)))
+          (substratic renderer)
+          (syphon enemy)
+          (syphon player)
+          (syphon weapon)
+          (syphon bullet)
+          (syphon collision)))
 
 (define window (window-create 1280 720 "Silent Syphon"))
 (define input-state (input-init window))
 (define renderer (renderer-create window))
 
 ;; Load game assets
-(define bitmap-font (font-load-file "assets/fonts/Thintel.ttf" 75))
+(define small-font (font-load-file "assets/fonts/Thintel.ttf" 75))
+(define result-font (font-load-file "assets/fonts/Thintel.ttf" 250))
+(define prompt-font (font-load-file "assets/fonts/Thintel.ttf" 125))
 
 (define screen-scale 4.0)
 
@@ -29,340 +36,36 @@
 
 ;;; -- Game --
 
-(define score-total 0)
-(define score-current 0)
 (define score-scroll-speed 150)
-(define total-level-time 0)
 (define max-level-time 180)
 
-;;; -- Player --
+(define-record-type game
+  (fields state
+          player
+          score-total
+          score-current
+          level-time
+          enemies
+          bullets))
 
-;; Define some game state
-(define player-ship-color (rgb 100 100 255))
-(define player-size 150)
-(define player-x (- (/ (window-width window) 2) (/ player-size 2)))
-(define player-y (- (window-height window) 300))
+(define (initialize-game)
+  (make-game :state 'playing
+             :player (create-player window)
+             :score-total 0
+             :score-current 0
+             :level-time 0
+             :enemies '()
+             :bullets '()))
 
-(define player-vel-x 0)
-(define player-vel-y 0)
-(define player-move-speed 500)            ; Pixels per second
-
-(define player-sphere (make-sphere player-x player-y (/ player-size 2)))
-
-(define player-shield-amount 1.0)
-(define player-energy-amount 1.0)
-
-(define player-energy-depletion 0.01)
-
-(define (update-player time-delta)
-  ;; Deplete energy
-  (set! player-energy-amount (- player-energy-amount
-                                (* player-energy-depletion time-delta)))
-
-  ;; Update player position
-  (if (not (equal? 0 player-vel-x))
-      (set! player-x (+ player-x (* player-vel-x time-delta))))
-  (if (not (equal? 0 player-vel-y))
-      (set! player-y (+ player-y (* player-vel-y time-delta)))))
-
-;; Controls:
-;; WSAD for directional
-;; J for siphoning energy
-;; Space to shoot
-
-(define (handle-player-input input-event)
-  (if (input-event-key-down? input-event)
-      (if (equal? (input-event-key-code input-event) input-key-code-w)
-          (set! player-vel-y (- 0 player-move-speed))
-          (if (equal? (input-event-key-code input-event) input-key-code-s)
-              (set! player-vel-y player-move-speed)
-              (if (equal? (input-event-key-code input-event) input-key-code-a)
-                  (set! player-vel-x (- 0 player-move-speed))
-                  (if (equal? (input-event-key-code input-event) input-key-code-d)
-                      (set! player-vel-x player-move-speed)
-                      (if (equal? (input-event-key-code input-event) input-key-code-space)
-                          (shoot-bullet (+ player-x (/ player-size 2))
-                                        (- player-y bullet-size)
-                                        (- 0 default-bullet-speed)
-                                        default-bullet-damage
-                                        'player))))))
-      (if (input-event-key-up? input-event)
-          (if (or (equal? (input-event-key-code input-event) input-key-code-w)
-                  (equal? (input-event-key-code input-event) input-key-code-s))
-              (set! player-vel-y 0)
-              (if (or (equal? (input-event-key-code input-event) input-key-code-a)
-                      (equal? (input-event-key-code input-event) input-key-code-d))
-                  (set! player-vel-x 0))))))
-
-;;; -- Enemies --
-
-;; Varieties of enemies
-;; - Plain drones that fly in a straight line or at an angle
-;; - Enemies with a more fluid movement path
-;; - Enemies that fly in a formation
-
-;; This will be adjusted over time
-(define enemy-spawn-interval-base 0.5)
-(define enemy-spawn-interval-range 3.0)
-(define enemy-spawn-interval-scale 1.0)
-(define enemy-spawn-time 0)
-
-(define enemy-list '())
-
-(define-record-type enemy
-  (fields x
-          y
-          base-x
-          size
-          score
-          color
-          shield
-          sphere
-          weapon
-          life-time
-          fire-time
-          next-fire-time
-          max-fire-length
-          max-fire-interval
-          update-func))
-
-(define drone-speed 250)
-
-(define (spawn-enemy)
-  ((array-nth enemy-spawners
-              (rand-int (array-length enemy-spawners)))))
-
-(define (check-for-spawns time-delta)
-  (set! enemy-spawn-time (+ enemy-spawn-time time-delta))
-  (if (> enemy-spawn-time
-         (+ (* enemy-spawn-interval-range
-               (/ (- max-level-time total-level-time)
-                  max-level-time))
-            enemy-spawn-interval-base))
+(define (end-game game state)
+  (game-state-set! game state)
+  (if (equal? state 'died)
       (begin
-        (set! enemy-spawn-time 0)
-        (spawn-enemy))))
-
-(define (update-drone enemy time-delta)
-  ;; Update position
-  (enemy-y-set! enemy (+ (enemy-y enemy) (* 300 time-delta))))
-
-(define (spawn-drone)
-  (let ((x (rand-int (- (window-width window) 100)))
-        (y -100)
-        (size 100))
-    (set! enemy-list
-          (cons (make-enemy :x x
-                            :y y
-                            :base-x x
-                            :size size
-                            :shield 10
-                            :score 100
-                            :sphere (make-sphere x y (/ size 2))
-                            :weapon blaster-weapon
-                            :life-time 0
-                            :fire-time 0
-                            :next-fire-time 1.7
-                            :max-fire-length 0.5
-                            :max-fire-interval 2.5
-                            :color (rgb 234 255 0)
-                            :update-func update-drone)
-                enemy-list))))
-
-(define (update-slider enemy time-delta)
-  ;; Update position
-  (enemy-x-set! enemy (+ (enemy-base-x enemy)
-                         (* (sin (* 3 (enemy-life-time enemy))) 100)))
-  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-delta))))
-
-(define (spawn-slider)
-  (let ((x (rand-int (- (window-width window) 100)))
-        (y -100)
-        (size 70))
-    (set! enemy-list
-          (cons (make-enemy :x x
-                            :y y
-                            :base-x x
-                            :size size
-                            :shield 10
-                            :score 100
-                            :sphere (make-sphere x y (/ size 2))
-                            :weapon blaster-weapon
-                            :life-time 0
-                            :fire-time 0
-                            :next-fire-time 1.7
-                            :max-fire-length 0.5
-                            :max-fire-interval 2.5
-                            :color (rgb 187 255 0)
-                            :update-func update-slider)
-                enemy-list))))
-
-(define enemy-spawners (make-array))
-(array-push enemy-spawners spawn-drone)
-(array-push enemy-spawners spawn-slider)
-
-(define (update-enemies time-delta)
-  (let next-enemy ((enemies enemy-list)
-                   (new-enemies '()))
-    (if (pair? enemies)
-        (let ((enemy (car enemies)))
-          ;; Is the enemy still alive?
-          (if (> (enemy-shield enemy) 0)
-              (begin
-                ;; Increase the life time
-                (enemy-life-time-set! enemy (+ (enemy-life-time enemy) time-delta))
-
-                ;; Update the enemy
-                ((enemy-update-func enemy) enemy time-delta)
-
-                ;; Should we fire?
-                (enemy-fire-time-set! enemy (+ (enemy-fire-time enemy) time-delta))
-                (if (> (enemy-fire-time enemy)
-                       (enemy-next-fire-time enemy))
-                    (begin
-                      ;; Reset the fire time
-                      (enemy-fire-time-set! enemy 0)
-
-                      ;; Fire the weapon
-                      (fire-weapon (enemy-x enemy)
-                                   (enemy-y enemy)
-                                   1    ; Positive y direction
-                                   (enemy-weapon enemy)
-                                   time-delta
-                                   'enemy)))
-
-                ;; Set the sphere center
-                (sphere-center-x-set! (enemy-sphere enemy)
-                                      (enemy-x enemy))
-                (sphere-center-y-set! (enemy-sphere enemy)
-                                      (enemy-y enemy))
-
-                ;; Check if enemy is still on screen
-                (if (< (enemy-y enemy)
-                       (window-height window))
-                    (set! new-enemies (cons enemy new-enemies))))
-
-              ;; Give the player some score
-              (set! score-total (+ score-total (enemy-score enemy))))
-
-          (next-enemy (cdr enemies) new-enemies))
-
-        ;; Return the updated enemies list
-        new-enemies)))
-
-(define (render-enemies renderer)
-  (let next-enemy ((enemies enemy-list))
-    (if (pair? enemies)
-        (let ((enemy (car enemies)))
-          ;; Render the enemy
-          (renderer-draw-rect renderer
-                              (- (enemy-x enemy)
-                                 (/ (enemy-size enemy) 2))
-                              (- (enemy-y enemy)
-                                 (/ (enemy-size enemy) 2))
-                              (enemy-size enemy)
-                              (enemy-size enemy)
-                              (enemy-color enemy))
-
-          (next-enemy (cdr enemies))))))
-
-;;; -- Weapon --
-
-(define-record-type weapon
-  (fields damage
-          bullet-speed
-          fire-rate
-          fire-time))
-
-(define (fire-weapon x y y-dir weapon time-delta owner)
-  (shoot-bullet x y
-                (* y-dir (weapon-bullet-speed weapon))
-                (weapon-damage weapon)
-                owner))
-
-(define blaster-weapon (make-weapon :damage 10
-                                    :bullet-speed 700
-                                    :fire-rate 1
-                                    :fire-time 0))
-
-;; define (shoot-bullet x y vel-y damage owner)
-
-;;; -- Bullets --
-
-(define-record-type bullet
-  (fields x y
-          vel-y
-          damage
-          sphere
-          owner))
-
-(define bullet-color (rgb 255 165 0))
-(define bullet-size 20)
-(define bullet-list '())
-(define default-bullet-speed 700)
-(define default-bullet-damage 10)
-
-(define (update-bullets time-delta)
-  (let next-bullet ((bullets bullet-list)
-                    (new-bullets '())
-                    (bullet-alive t))
-    (if (pair? bullets)
-        (let ((bullet (car bullets)))
-          ;; Move the bullet
-          (bullet-y-set! bullet (+ (bullet-y bullet)
-                                   (* (bullet-vel-y bullet) time-delta)))
-
-          ;; Set the sphere center
-          (sphere-center-x-set! (bullet-sphere bullet)
-                                (bullet-x bullet))
-          (sphere-center-y-set! (bullet-sphere bullet)
-                                (bullet-y bullet))
-
-          ;; TODO: Check for collision
-          ;; Check for sphere of bullet vs sphere of entity
-          (if (equal? (bullet-owner bullet) 'player)
-              (let next-enemy ((enemies enemy-list))
-                (if (pair? enemies)
-                    (begin
-                      (if (sphere-intersect? (bullet-sphere bullet) (enemy-sphere (car enemies)))
-                          ;; TODO: Make bullet go away
-                          (begin
-                            (set! bullet-alive nil)
-                            (enemy-shield-set! (car enemies)
-                                               (- (enemy-shield (car enemies))
-                                                  (bullet-damage bullet)))))
-                      (next-enemy (cdr enemies))))))
-
-          ;; Check if bullet is still on screen
-          (if (and bullet-alive
-                   (> (+ (bullet-y bullet) bullet-size) 0))
-              (set! new-bullets (cons bullet new-bullets)))
-
-          (next-bullet (cdr bullets) new-bullets t))
-
-        ;; Return the updated bullets list
-        new-bullets)))
-
-(define (render-bullets renderer)
-  (let next-bullet ((bullets bullet-list))
-    (if (pair? bullets)
-        (let ((bullet (car bullets)))
-          (renderer-draw-rect renderer
-                              (- (bullet-x bullet)
-                                 (/ bullet-size 2))
-                              (- (bullet-y bullet)
-                                 (/ bullet-size 2))
-                              bullet-size bullet-size
-                              bullet-color)
-          (next-bullet (cdr bullets))))))
-
-(define (shoot-bullet x y vel-y damage owner)
-  (set! bullet-list (cons (make-bullet :x x :y y
-                                       :vel-y vel-y
-                                       :sphere (make-sphere x y (/ bullet-size 2))
-                                       :damage damage
-                                       :owner owner)
-                          bullet-list)))
+        (set! result-text you-died-text)
+        (set! result-width you-died-width))
+      (begin
+        (set! result-text depleted-text)
+        (set! result-width depleted-width))))
 
 ;;; -- HUD --
 
@@ -372,12 +75,15 @@
 (define shield-meter-color (rgb 158 252 255))
 (define energy-meter-color (rgb 255 105 41))
 
-(define (update-hud time-delta)
-  (if (< score-current score-total)
-      (set! score-current (min score-total
-                               (+ score-current (* score-scroll-speed time-delta))))))
+(define (update-hud game time-delta)
+  (if (< (game-score-current game)
+         (game-score-total game))
+      (game-score-current-set! game
+                               (min (game-score-total game)
+                                    (+ (game-score-current game)
+                                       (* score-scroll-speed time-delta))))))
 
-(define (render-hud renderer)
+(define (render-hud renderer game player window)
   (renderer-draw-rect renderer
                       (- (window-width window) hud-width)
                       0
@@ -385,7 +91,7 @@
                       (window-height window)
                       hud-color)
 
-  (let ((shield-meter-height (* player-shield-amount meter-height)))
+  (let ((shield-meter-height (* (/ (player-shield-amount player) 100) meter-height)))
     (renderer-draw-rect renderer
                         (- (window-width window) 190)
                         (- (- (window-height window) 100)
@@ -394,7 +100,7 @@
                         shield-meter-height
                         shield-meter-color))
 
-  (let ((energy-meter-height (* player-energy-amount meter-height)))
+  (let ((energy-meter-height (* (/ (player-energy-amount player) 100) meter-height)))
     (renderer-draw-rect renderer
                         (- (window-width window) 135)
                         (- (- (window-height window) 100)
@@ -405,69 +111,148 @@
 
   ;; Draw the score
   (render-text renderer
-               bitmap-font
-               (string-append "Score: " (number->string score-current))
+               small-font
+               (string-append "Score: " (number->string (game-score-current game)))
                (- (window-width window) 270)
                150))
 
 ;;; -- Input --
 
-(define (handle-input-events)
+(define (handle-prompt-input input-event)
+  (if (input-event-key-down? input-event)
+      (if (equal? (input-event-key-code input-event) input-key-code-y)
+          (display "PLAY AGAIN!\n")
+          (if (equal? (input-event-key-code input-event) input-key-code-n)
+              (display "GO BACK TO MENU!\n")))))
+
+(define (handle-input-events game)
   (let next-event ((input-event (input-event-take input-state)))
     (if input-event
         (begin
-          (handle-player-input input-event)
+          (handle-player-input (game-player game) input-event)
           (next-event (input-event-take input-state))))))
 
 ;;; -- Game Loop --
+
+(define current-game (initialize-game))
 
 (define (game-updater time-delta)
   (if (not (window-needs-close? window))
       (begin
         ;; Count how much time we've been in the level
-        (set! total-level-time (+ total-level-time time-delta))
+        (game-level-time-set! current-game
+                              (+ (game-level-time current-game)
+                                 time-delta))
 
-        ;; Update the player
-        (handle-input-events)
-        (update-player time-delta)
+        ;; If we're still playing, update game entities
+        (if (equal? (game-state current-game) 'playing)
+            (begin
+              ;; Update the player
+              (handle-input-events current-game)
+              (update-player (game-player current-game)
+                             (lambda (bullet)
+                               (game-bullets-set! current-game
+                                                  (cons bullet
+                                                        (game-bullets current-game))))
+                             time-delta)
 
-        ;; Update bullets
-        (set! bullet-list (update-bullets time-delta))
+              (if (not (equal? (player-state (game-player current-game))
+                               'alive))
+                  (end-game current-game (player-state (game-player current-game))))
 
-        ;; Spawn and update enemies
-        (check-for-spawns time-delta)
-        (set! enemy-list (update-enemies time-delta))
+              ;; Update bullets
+              (game-bullets-set! current-game
+                                 (update-bullets (game-bullets current-game)
+                                                 time-delta))
 
-        ;; Update the HUD
-        (update-hud time-delta)
+              ;; Spawn and update enemies
+              (game-enemies-set! current-game
+                                 (spawn-enemies (game-enemies current-game)
+                                                (game-level-time current-game)
+                                                max-level-time
+                                                time-delta
+                                                window))
+              (game-enemies-set! current-game
+                                 (update-enemies (game-enemies current-game)
+                                                 (lambda (bullet)
+                                                   (game-bullets-set! current-game
+                                                                      (cons bullet
+                                                                            (game-bullets current-game))))
+                                                 time-delta
+                                                 window))
+
+              ;; Check for collisions
+              (check-collisions (game-player current-game)
+                                (game-enemies current-game)
+                                (game-bullets current-game)
+                                (lambda (enemy)
+                                  ;; Give the player some score
+                                  (game-score-total-set! current-game
+                                                         (+ (game-score-total current-game)
+                                                            (enemy-score enemy)))))
+
+              ;; Update the HUD
+              (update-hud current-game time-delta))
+
+            ;; Respond to input to the prompt
+            (handle-input-events current-game))
 
         ;; Make sure we don't exit the game loop
         t)))
+
+(define you-died-text "YOU DIED")
+(define you-died-width (font-text-width result-font you-died-text))
+
+(define depleted-text "DEPLETED")
+(define depleted-width (font-text-width result-font depleted-text))
+
+(define prompt-text "Play Again? (Y/N)")
+(define prompt-width (font-text-width prompt-font prompt-text))
+
+(define result-text nil)
+(define result-width nil)
 
 (define (game-renderer renderer)
   ;; Clear the screen
   (renderer-clear renderer 0 0 0)
 
   ;; Render the bullets
-  (render-bullets renderer)
+  (render-bullets renderer (game-bullets current-game))
 
   ;; Render the player's ship
-  (renderer-draw-rect renderer
-                      player-x player-y
-                      player-size player-size
-                      player-ship-color)
+  (render-player renderer (game-player current-game))
 
   ;; Render the enemies
-  (render-enemies renderer)
+  (render-enemies renderer (game-enemies current-game))
 
   ;; Render the HUD
-  (render-hud renderer)
+  (render-hud renderer
+              current-game
+              (game-player current-game)
+              window)
+
+  ;; Display the result string
+  (if (not (equal? (game-state current-game)
+                   'playing))
+      (begin
+        (render-text renderer
+                     result-font
+                     result-text
+                     (- (/ (- (window-width window) hud-width) 2)
+                        (/ result-width 2))
+                     500)
+        (render-text renderer
+                     prompt-font
+                     prompt-text
+                     (- (/ (- (window-width window) hud-width) 2)
+                        (/ result-width 2))
+                     650)))
 
   ;; Render the FPS
   (let ((fps (current-fps)))
     (if fps
         (render-text renderer
-                     bitmap-font
+                     small-font
                      (string-append "FPS: " (number->string fps 3))
                      (- (window-width window) 220)
                      60))))

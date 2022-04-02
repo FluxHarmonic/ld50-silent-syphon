@@ -1,0 +1,55 @@
+(define-module (syphon bullet)
+  (import (mesche list)
+          (substratic physics)
+          (substratic renderer)))
+
+(define-record-type bullet
+  (fields x y
+          vel-y
+          alive
+          damage
+          sphere
+          owner))
+
+(define bullet-color (rgb 255 165 0))
+(define bullet-size 20 :export)
+(define default-bullet-speed 700)
+(define default-bullet-damage 10)
+
+(define (update-bullets bullets time-delta) :export
+  (let next-bullet ((bullets bullets)
+                    (new-bullets '()))
+    (if (pair? bullets)
+        (let ((bullet (car bullets)))
+          (if (bullet-alive bullet)
+              (begin
+                ;; Move the bullet
+                (bullet-y-set! bullet (+ (bullet-y bullet)
+                                         (* (bullet-vel-y bullet) time-delta)))
+
+                ;; Set the sphere center
+                (sphere-center-x-set! (bullet-sphere bullet)
+                                      (bullet-x bullet))
+                (sphere-center-y-set! (bullet-sphere bullet)
+                                      (bullet-y bullet))
+
+                ;; The bullet is still alive, keep it
+                (set! new-bullets (cons bullet new-bullets))))
+
+          (next-bullet (cdr bullets) new-bullets))
+
+        ;; Return the updated bullets list
+        new-bullets)))
+
+(define (render-bullets renderer bullets) :export
+  (let next-bullet ((bullets bullets))
+    (if (pair? bullets)
+        (let ((bullet (car bullets)))
+          (renderer-draw-rect renderer
+                              (- (bullet-x bullet)
+                                 (/ bullet-size 2))
+                              (- (bullet-y bullet)
+                                 (/ bullet-size 2))
+                              bullet-size bullet-size
+                              bullet-color)
+          (next-bullet (cdr bullets))))))

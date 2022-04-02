@@ -65,6 +65,21 @@ CLOSED: [2022-04-02 Sat 14:18]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 14:18]
 :END:
-** TODO Add player shield damage
-** TODO Speed up the enemy spawning
+** DONE Add player shield damage
+CLOSED: [2022-04-02 Sat 17:24]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
+:END:
+** DONE Speed up the enemy spawning
+CLOSED: [2022-04-02 Sat 17:24]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
+:END:
 ** TODO Restrict gameplay to the visible area (sans HUD)
+
+* Mesche Issues
+
+I need to investigate these issues:
+
+** TODO Heap overflow in a nested =if= -> =begin= in =update-player=, is the chunk too big?
+** TODO Circular module reference issues with =syphon player= and =syphon weapon=

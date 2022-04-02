@@ -1,0 +1,175 @@
+(define-module (syphon enemy)
+  (import (mesche array)
+          (mesche math)
+          (mesche list)
+          (mesche string)
+          (substratic window)
+          (substratic physics)
+          (substratic renderer)
+          (syphon weapon)))
+
+;;; -- Enemies --
+
+;; Varieties of enemies
+;; - Plain drones that fly in a straight line or at an angle
+;; - Enemies with a more fluid movement path
+;; - Enemies that fly in a formation
+
+;; This will be adjusted over time
+(define enemy-spawn-interval-base 0.5)
+(define enemy-spawn-interval-range 3.0)
+(define enemy-spawn-interval-scale 1.0)
+(define enemy-spawn-time 0)
+
+(define-record-type enemy
+  (fields x
+          y
+          base-x
+          size
+          score
+          color
+          shield
+          sphere
+          weapon
+          life-time
+          fire-time
+          next-fire-time
+          max-fire-length
+          max-fire-interval
+          update-func))
+
+(define drone-speed 250)
+
+(define (spawn-enemies enemies total-level-time max-level-time time-delta window) :export
+  (set! enemy-spawn-time (+ enemy-spawn-time time-delta))
+  (if (> enemy-spawn-time
+         (+ (* enemy-spawn-interval-range
+               (/ (- max-level-time total-level-time)
+                  max-level-time))
+            enemy-spawn-interval-base))
+      (begin
+        (set! enemy-spawn-time 0)
+        ;; Call the spawner function, passing the window.  Add the result
+        ;; to the enemy list
+        (cons ((array-nth enemy-spawners
+                          (rand-int (array-length enemy-spawners)))
+               window)
+              enemies))
+      enemies))
+
+(define (update-drone enemy time-delta)
+  ;; Update position
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* 300 time-delta))))
+
+(define (spawn-drone window)
+  (let ((x (rand-int (- (window-width window) 100)))
+        (y -100)
+        (size 100))
+    (make-enemy :x x
+                :y y
+                :base-x x
+                :size size
+                :shield 10
+                :score 100
+                :sphere (make-sphere x y (/ size 2))
+                :weapon blaster-weapon
+                :life-time 0
+                :fire-time 0
+                :next-fire-time 1.7
+                :max-fire-length 0.5
+                :max-fire-interval 2.5
+                :color (rgb 234 255 0)
+                :update-func update-drone)))
+
+(define (update-slider enemy time-delta)
+  ;; Update position
+  (enemy-x-set! enemy (+ (enemy-base-x enemy)
+                         (* (sin (* 3 (enemy-life-time enemy))) 100)))
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-delta))))
+
+(define (spawn-slider window)
+  (let ((x (rand-int (- (window-width window) 100)))
+        (y -100)
+        (size 70))
+    (make-enemy :x x
+                :y y
+                :base-x x
+                :size size
+                :shield 10
+                :score 100
+                :sphere (make-sphere x y (/ size 2))
+                :weapon blaster-weapon
+                :life-time 0
+                :fire-time 0
+                :next-fire-time 1.7
+                :max-fire-length 0.5
+                :max-fire-interval 2.5
+                :color (rgb 187 255 0)
+                :update-func update-slider)))
+
+(define enemy-spawners (make-array))
+(array-push enemy-spawners spawn-drone)
+(array-push enemy-spawners spawn-slider)
+
+(define (update-enemies enemies new-bullet-func time-delta window) :export
+  (let next-enemy ((enemies enemies)
+                   (new-enemies '()))
+    (if (pair? enemies)
+        (let ((enemy (car enemies)))
+          ;; Is the enemy still alive?
+          (if (> (enemy-shield enemy) 0)
+              (begin
+                ;; Increase the life time
+                (enemy-life-time-set! enemy (+ (enemy-life-time enemy) time-delta))
+
+                ;; Update the enemy
+                ((enemy-update-func enemy) enemy time-delta)
+
+                ;; Should we fire?
+                (enemy-fire-time-set! enemy (+ (enemy-fire-time enemy) time-delta))
+                (if (> (enemy-fire-time enemy)
+                       (enemy-next-fire-time enemy))
+                    (begin
+                      ;; Reset the fire time
+                      (enemy-fire-time-set! enemy 0)
+
+                      ;; Fire the weapon
+                      (new-bullet-func
+                       (fire-weapon (enemy-weapon enemy)
+                                    (enemy-x enemy)
+                                    (enemy-y enemy)
+                                    1   ; Positive y direction
+                                    time-delta
+                                    'enemy))))
+
+                ;; Set the sphere center
+                (sphere-center-x-set! (enemy-sphere enemy)
+                                      (enemy-x enemy))
+                (sphere-center-y-set! (enemy-sphere enemy)
+                                      (enemy-y enemy))
+
+                ;; Check if enemy is still on screen
+                (if (< (enemy-y enemy)
+                       (window-height window))
+                    (set! new-enemies (cons enemy new-enemies)))))
+
+          (next-enemy (cdr enemies) new-enemies))
+
+        ;; Return the updated enemies list
+        new-enemies)))
+
+(define (render-enemies renderer enemies) :export
+  (let next-enemy ((enemies enemies))
+    (if (pair? enemies)
+        (let ((enemy (car enemies)))
+          ;; Render the enemy
+          (renderer-draw-rect renderer
+                              (- (enemy-x enemy)
+                                 (/ (enemy-size enemy) 2))
+                              (- (enemy-y enemy)
+                                 (/ (enemy-size enemy) 2))
+                              (enemy-size enemy)
+                              (enemy-size enemy)
+                              (enemy-color enemy))
+
+          (next-enemy (cdr enemies))))))

@@ -1,0 +1,116 @@
+(define-module (syphon player)
+  (import (substratic input)
+          (substratic window)
+          (substratic physics)
+          (substratic renderer)
+          (syphon weapon)))
+
+(define-record-type player
+  (fields x y
+          vel-x vel-y
+          state
+          sphere
+          weapon
+          firing
+          shield-amount
+          energy-amount))
+
+(define (create-player window) :export
+  (make-player :x (- (/ (window-width window) 2) (/ player-size 2))
+               :y (- (window-height window) 300)
+               :vel-x 0
+               :vel-y 0
+               :state 'alive
+               :sphere (make-sphere player-x player-y (/ player-size 2))
+               :weapon (make-weapon :damage 10
+                                    :bullet-speed 700
+                                    :fire-rate 1
+                                    :fire-time 0)
+               :firing nil
+               :shield-amount 100
+               :energy-amount 100))
+
+;; Define some game state
+(define player-ship-color (rgb 100 100 255))
+(define player-size 150)
+(define player-move-speed 500)            ; Pixels per second
+(define player-energy-depletion 1)
+
+(define (update-player player new-bullet-func time-delta) :export
+  ;; Is the player still alive
+  (if (> (player-shield-amount player) 0)
+      (begin
+        ;; Deplete energy
+        (player-energy-amount-set! player
+                                   (- (player-energy-amount player)
+                                      (* player-energy-depletion time-delta)))
+
+        ;; Are we out of energy?
+        (if (< (player-energy-amount player) 1)
+            (player-state-set! player 'depleted))
+
+        ;; Update player position
+        (if (not (equal? 0 (player-vel-x player)))
+            (player-x-set! player
+                           (+ (player-x player) (* (player-vel-x player)
+                                                   time-delta))))
+        (if (not (equal? 0 (player-vel-y player)))
+            (player-y-set! player
+                           (+ (player-y player) (* (player-vel-y player)
+                                                   time-delta))))
+
+        ;; Fire the weapon
+        (if (player-firing player)
+            ;; TODO: Why is there a heap overflow when this is a `begin`?
+            (let ((foo t))
+              ;; TODO: Remove when we want to hold the button
+              (player-firing-set! player nil)
+              (new-bullet-func
+               (fire-weapon (player-weapon player)
+                            (+ (player-x player) (/ player-size 2))
+                            (player-y player)
+                            -1
+                            time-delta
+                            'player))))
+
+        ;; Set the sphere center
+        (sphere-center-x-set! (player-sphere player) (player-x player))
+        (sphere-center-y-set! (player-sphere player) (player-y player)))
+      ;; We died
+      (player-state-set! player 'died)))
+
+(define (render-player renderer player) :export
+  (renderer-draw-rect renderer
+                      (- (player-x player) (/ player-size 2))
+                      (- (player-y player) (/ player-size 2))
+                      player-size player-size
+                      player-ship-color))
+
+;; Controls:
+;; WSAD for directional
+;; J for siphoning energy
+;; Space to shoot
+
+(define (handle-player-input player input-event) :export
+  (if (input-event-key-down? input-event)
+      (let ((key-code (input-event-key-code input-event)))
+        (if (equal? key-code input-key-code-w)
+            (player-vel-y-set! player (- 0 player-move-speed))
+            (if (equal? key-code input-key-code-s)
+                (player-vel-y-set! player player-move-speed)
+                (if (equal? key-code input-key-code-a)
+                    (player-vel-x-set! player (- 0 player-move-speed))
+                    (if (equal? key-code input-key-code-d)
+                        (player-vel-x-set! player player-move-speed)
+                        (if (equal? key-code input-key-code-space)
+                            (player-firing-set! player t)))))))
+      (if (input-event-key-up? input-event)
+          (let ((key-code (input-event-key-code input-event)))
+            (if (or (equal? key-code input-key-code-w)
+                    (equal? key-code input-key-code-s))
+                (player-vel-y-set! player 0)
+                (if (or (equal? key-code input-key-code-a)
+                        (equal? key-code input-key-code-d))
+                    (player-vel-x-set! player 0)))
+            (if (equal? key-code input-key-code-space)
+                (player-firing-set! player nil))))))
