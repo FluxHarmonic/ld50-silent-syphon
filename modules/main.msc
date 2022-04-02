@@ -8,6 +8,7 @@
           (substratic input)
           (substratic engine)
           (substratic window)
+          (substratic physics)
           (substratic texture)
           (substratic renderer)))
 
@@ -43,10 +44,19 @@
 (define player-vel-y 0)
 (define player-move-speed 500)            ; Pixels per second
 
+(define player-sphere (make-sphere player-x player-y (/ player-size 2)))
+
 (define player-shield-amount 1.0)
 (define player-energy-amount 1.0)
 
+(define player-energy-depletion 0.01)
+
 (define (update-player time-delta)
+  ;; Deplete energy
+  (set! player-energy-amount (- player-energy-amount
+                                (* player-energy-depletion time-delta)))
+
+  ;; Update player position
   (if (not (equal? 0 player-vel-x))
       (set! player-x (+ player-x (* player-vel-x time-delta))))
   (if (not (equal? 0 player-vel-y))
@@ -70,7 +80,9 @@
                       (if (equal? (input-event-key-code input-event) input-key-code-space)
                           (shoot-bullet (+ player-x (/ player-size 2))
                                         (- player-y bullet-size)
-                                        (- 0 default-bullet-speed)))))))
+                                        (- 0 default-bullet-speed)
+                                        default-bullet-damage
+                                        'player))))))
       (if (input-event-key-up? input-event)
           (if (or (equal? (input-event-key-code input-event) input-key-code-w)
                   (equal? (input-event-key-code input-event) input-key-code-s))
@@ -100,6 +112,7 @@
           size
           color
           shield
+          sphere
           update-func))
 
 (define drone-speed 250)
@@ -126,29 +139,40 @@
   )
 
 (define (spawn-drone)
-  (set! enemy-list
-        (cons (make-enemy :x (rand-int (- (window-width window) 100))
-                          :y -100
-                          :size 100
-                          :shield 10
-                          :color (rgb 234 255 0)
-                          :update-func update-drone)
-              enemy-list)))
+  (let ((x (rand-int (- (window-width window) 100)))
+        (y -100)
+        (size 100))
+    (set! enemy-list
+          (cons (make-enemy :x x
+                            :y y
+                            :size size
+                            :shield 10
+                            :sphere (make-sphere x y (/ size 2))
+                            :color (rgb 234 255 0)
+                            :update-func update-drone)
+                enemy-list))))
 
 (define (update-enemies time-step)
   (let next-enemy ((enemies enemy-list)
                    (new-enemies '()))
     (if (pair? enemies)
         (let ((enemy (car enemies)))
-          ;; Update the enemy
-          ((enemy-update-func enemy) enemy time-step)
+          ;; Is the enemy still alive?
+          (if (> (enemy-shield enemy) 0)
+              (begin
+                ;; Update the enemy
+                ((enemy-update-func enemy) enemy time-step)
 
-          ;; TODO: Check for collision
+                ;; Set the sphere center
+                (sphere-center-x-set! (enemy-sphere enemy)
+                                      (enemy-x enemy))
+                (sphere-center-y-set! (enemy-sphere enemy)
+                                      (enemy-y enemy))
 
-          ;; Check if enemy is still on screen
-          (if (< (enemy-y enemy)
-                 (window-height window))
-              (set! new-enemies (cons enemy new-enemies)))
+                ;; Check if enemy is still on screen
+                (if (< (enemy-y enemy)
+                       (window-height window))
+                    (set! new-enemies (cons enemy new-enemies)))))
 
           (next-enemy (cdr enemies) new-enemies))
 
@@ -161,8 +185,10 @@
         (let ((enemy (car enemies)))
           ;; Render the enemy
           (renderer-draw-rect renderer
-                              (enemy-x enemy)
-                              (enemy-y enemy)
+                              (- (enemy-x enemy)
+                                 (/ (enemy-size enemy) 2))
+                              (- (enemy-y enemy)
+                                 (/ (enemy-size enemy) 2))
                               (enemy-size enemy)
                               (enemy-size enemy)
                               (enemy-color enemy))
@@ -172,29 +198,55 @@
 ;;; -- Bullets --
 
 (define-record-type bullet
-  (fields x y vel-y owner))
+  (fields x y
+          vel-y
+          damage
+          sphere
+          owner))
 
 (define bullet-color (rgb 255 165 0))
 (define bullet-size 20)
 (define bullet-list '())
 (define default-bullet-speed 700)
+(define default-bullet-damage 10)
 
 (define (update-bullets time-delta)
   (let next-bullet ((bullets bullet-list)
-                    (new-bullets '()))
+                    (new-bullets '())
+                    (bullet-alive t))
     (if (pair? bullets)
         (let ((bullet (car bullets)))
           ;; Move the bullet
           (bullet-y-set! bullet (+ (bullet-y bullet)
                                    (* (bullet-vel-y bullet) time-delta)))
 
+          ;; Set the sphere center
+          (sphere-center-x-set! (bullet-sphere bullet)
+                                (bullet-x bullet))
+          (sphere-center-y-set! (bullet-sphere bullet)
+                                (bullet-y bullet))
+
           ;; TODO: Check for collision
+          ;; Check for sphere of bullet vs sphere of entity
+          (if (equal? (bullet-owner bullet) 'player)
+              (let next-enemy ((enemies enemy-list))
+                (if (pair? enemies)
+                    (begin
+                      (if (sphere-intersect? (bullet-sphere bullet) (enemy-sphere (car enemies)))
+                          ;; TODO: Make bullet go away
+                          (begin
+                            (set! bullet-alive nil)
+                            (enemy-shield-set! (car enemies)
+                                               (- (enemy-shield (car enemies))
+                                                  (bullet-damage bullet)))))
+                      (next-enemy (cdr enemies))))))
 
           ;; Check if bullet is still on screen
-          (if (> (+ (bullet-y bullet) bullet-size) 0)
+          (if (and bullet-alive
+                   (> (+ (bullet-y bullet) bullet-size) 0))
               (set! new-bullets (cons bullet new-bullets)))
 
-          (next-bullet (cdr bullets) new-bullets))
+          (next-bullet (cdr bullets) new-bullets t))
 
         ;; Return the updated bullets list
         new-bullets)))
@@ -204,14 +256,20 @@
     (if (pair? bullets)
         (let ((bullet (car bullets)))
           (renderer-draw-rect renderer
-                              (bullet-x bullet)
-                              (bullet-y bullet)
+                              (- (bullet-x bullet)
+                                 (/ bullet-size 2))
+                              (- (bullet-y bullet)
+                                 (/ bullet-size 2))
                               bullet-size bullet-size
                               bullet-color)
           (next-bullet (cdr bullets))))))
 
-(define (shoot-bullet x y vel-y)
-  (set! bullet-list (cons (make-bullet :x x :y y :vel-y vel-y)
+(define (shoot-bullet x y vel-y damage owner)
+  (set! bullet-list (cons (make-bullet :x x :y y
+                                       :vel-y vel-y
+                                       :sphere (make-sphere x y (/ bullet-size 2))
+                                       :damage damage
+                                       :owner owner)
                           bullet-list)))
 
 ;;; -- HUD --

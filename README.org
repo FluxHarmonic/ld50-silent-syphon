@@ -40,5 +40,15 @@ CLOSED: [2022-04-02 Sat 09:35]
 :END:
 ** DONE Add shield and energy meters (basic HUD)
 CLOSED: [2022-04-02 Sat 09:52]
-** TODO Add bullet collision detection
+** DONE Add bullet collision detection
+CLOSED: [2022-04-02 Sat 10:42]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 10:42]
+:END:
+** TODO Add score display
+** TODO Restrict gameplay to the visible area (sans HUD)
+** TODO Create another more interesting enemy with more shield
+** TODO Update score based on kills
 ** TODO Add basic enemy AI (shoot at player, have predefined movement pattern)
+** TODO Add player shield damage
+** TODO Speed up the enemy spawning
