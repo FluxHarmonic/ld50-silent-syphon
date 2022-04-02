@@ -26,6 +26,12 @@
 ;; Get an fps counter
 (define current-fps (make-fps-counter))
 
+;;; -- Game --
+
+(define total-level-time 0)
+(define max-level-time 180)
+
+;;; -- Player --
 
 ;; Define some game state
 (define player-ship-color (rgb 100 100 255))
@@ -37,15 +43,10 @@
 (define player-vel-y 0)
 (define player-move-speed 500)            ; Pixels per second
 
-(define-record-type bullet
-  (fields x y vel-y owner))
+(define player-shield-amount 1.0)
+(define player-energy-amount 1.0)
 
-(define bullet-color (rgb 255 165 0))
-(define bullet-size 20)
-(define bullet-list '())
-(define default-bullet-speed 700)
-
-(define (player-update time-delta)
+(define (update-player time-delta)
   (if (not (equal? 0 player-vel-x))
       (set! player-x (+ player-x (* player-vel-x time-delta))))
   (if (not (equal? 0 player-vel-y))
@@ -55,10 +56,6 @@
 ;; WSAD for directional
 ;; J for siphoning energy
 ;; Space to shoot
-
-(define (shoot-bullet x y vel-y)
-  (set! bullet-list (cons (make-bullet :x x :y y :vel-y vel-y)
-                          bullet-list)))
 
 (define (handle-player-input input-event)
   (if (input-event-key-down? input-event)
@@ -82,22 +79,105 @@
                       (equal? (input-event-key-code input-event) input-key-code-d))
                   (set! player-vel-x 0))))))
 
-(define (handle-input-events)
-  (let next-event ((input-event (input-event-take input-state)))
-    (if input-event
-        (begin
-          (handle-player-input input-event)
-          (next-event (input-event-take input-state))))))
+;;; -- Enemies --
 
-(define (game-updater time-delta)
-  (if (not (window-needs-close? window))
+;; Varieties of enemies
+;; - Plain drones that fly in a straight line or at an angle
+;; - Enemies with a more fluid movement path
+;; - Enemies that fly in a formation
+
+;; This will be adjusted over time
+(define enemy-spawn-interval-base 0.5)
+(define enemy-spawn-interval-range 3.5)
+(define enemy-spawn-interval-scale 1.0)
+(define enemy-spawn-time 0)
+
+(define enemy-list '())
+
+(define-record-type enemy
+  (fields x
+          y
+          size
+          color
+          shield
+          update-func))
+
+(define drone-speed 250)
+
+(define (spawn-enemy)
+  (spawn-drone))
+
+(define (check-for-spawns time-step)
+  (set! enemy-spawn-time (+ enemy-spawn-time time-step))
+  (if (> enemy-spawn-time
+         (+ (* enemy-spawn-interval-range
+               (/ (- max-level-time total-level-time)
+                  max-level-time))
+            enemy-spawn-interval-base))
       (begin
-        (handle-input-events)
-        (player-update time-delta)
-        (set! bullet-list (update-bullets time-delta))
+        (set! enemy-spawn-time 0)
+        (spawn-enemy))))
 
-        ;; Make sure we don't exit the game loop
-        t)))
+(define (update-drone enemy time-step)
+  ;; Update position
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-step)))
+
+  ;; Is it time to shoot?
+  )
+
+(define (spawn-drone)
+  (set! enemy-list
+        (cons (make-enemy :x (rand-int (- (window-width window) 100))
+                          :y -100
+                          :size 100
+                          :shield 10
+                          :color (rgb 234 255 0)
+                          :update-func update-drone)
+              enemy-list)))
+
+(define (update-enemies time-step)
+  (let next-enemy ((enemies enemy-list)
+                   (new-enemies '()))
+    (if (pair? enemies)
+        (let ((enemy (car enemies)))
+          ;; Update the enemy
+          ((enemy-update-func enemy) enemy time-step)
+
+          ;; TODO: Check for collision
+
+          ;; Check if enemy is still on screen
+          (if (< (enemy-y enemy)
+                 (window-height window))
+              (set! new-enemies (cons enemy new-enemies)))
+
+          (next-enemy (cdr enemies) new-enemies))
+
+        ;; Return the updated enemies list
+        new-enemies)))
+
+(define (render-enemies renderer)
+  (let next-enemy ((enemies enemy-list))
+    (if (pair? enemies)
+        (let ((enemy (car enemies)))
+          ;; Render the enemy
+          (renderer-draw-rect renderer
+                              (enemy-x enemy)
+                              (enemy-y enemy)
+                              (enemy-size enemy)
+                              (enemy-size enemy)
+                              (enemy-color enemy))
+
+          (next-enemy (cdr enemies))))))
+
+;;; -- Bullets --
+
+(define-record-type bullet
+  (fields x y vel-y owner))
+
+(define bullet-color (rgb 255 165 0))
+(define bullet-size 20)
+(define bullet-list '())
+(define default-bullet-speed 700)
 
 (define (update-bullets time-delta)
   (let next-bullet ((bullets bullet-list)
@@ -112,8 +192,7 @@
 
           ;; Check if bullet is still on screen
           (if (> (+ (bullet-y bullet) bullet-size) 0)
-              (set! new-bullets (cons bullet new-bullets))
-              (display "Removed bullet!\n"))
+              (set! new-bullets (cons bullet new-bullets)))
 
           (next-bullet (cdr bullets) new-bullets))
 
@@ -131,6 +210,41 @@
                               bullet-color)
           (next-bullet (cdr bullets))))))
 
+(define (shoot-bullet x y vel-y)
+  (set! bullet-list (cons (make-bullet :x x :y y :vel-y vel-y)
+                          bullet-list)))
+
+;;; -- Input --
+
+(define (handle-input-events)
+  (let next-event ((input-event (input-event-take input-state)))
+    (if input-event
+        (begin
+          (handle-player-input input-event)
+          (next-event (input-event-take input-state))))))
+
+;;; -- Game Loop --
+
+(define (game-updater time-delta)
+  (if (not (window-needs-close? window))
+      (begin
+        ;; Count how much time we've been in the level
+        (set! total-level-time (+ total-level-time time-delta))
+
+        ;; Update the player
+        (handle-input-events)
+        (update-player time-delta)
+
+        ;; Update bullets
+        (set! bullet-list (update-bullets time-delta))
+
+        ;; Spawn and update enemies
+        (check-for-spawns time-delta)
+        (set! enemy-list (update-enemies time-delta))
+
+        ;; Make sure we don't exit the game loop
+        t)))
+
 (define (game-renderer renderer)
   ;; Clear the screen
   (renderer-clear renderer 0 0 0)
@@ -140,6 +254,9 @@
                       player-x player-y
                       player-size player-size
                       player-ship-color)
+
+  ;; Render the enemies
+  (render-enemies renderer)
 
   ;; Render the bullets
   (render-bullets renderer)
