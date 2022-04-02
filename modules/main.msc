@@ -26,17 +26,126 @@
 ;; Get an fps counter
 (define current-fps (make-fps-counter))
 
+
+;; Define some game state
+(define player-ship-color (rgb 100 100 255))
+(define player-size 150)
+(define player-x (- (/ (window-width window) 2) (/ player-size 2)))
+(define player-y (- (window-height window) 300))
+
+(define player-vel-x 0)
+(define player-vel-y 0)
+(define player-move-speed 500)            ; Pixels per second
+
+(define-record-type bullet
+  (fields x y vel-y owner))
+
+(define bullet-color (rgb 255 165 0))
+(define bullet-size 20)
+(define bullet-list '())
+(define default-bullet-speed 700)
+
+(define (player-update time-delta)
+  (if (not (equal? 0 player-vel-x))
+      (set! player-x (+ player-x (* player-vel-x time-delta))))
+  (if (not (equal? 0 player-vel-y))
+      (set! player-y (+ player-y (* player-vel-y time-delta)))))
+
+;; Controls:
+;; WSAD for directional
+;; J for siphoning energy
+;; Space to shoot
+
+(define (shoot-bullet x y vel-y)
+  (set! bullet-list (cons (make-bullet :x x :y y :vel-y vel-y)
+                          bullet-list)))
+
+(define (handle-player-input input-event)
+  (if (input-event-key-down? input-event)
+      (if (equal? (input-event-key-code input-event) input-key-code-w)
+          (set! player-vel-y (- 0 player-move-speed))
+          (if (equal? (input-event-key-code input-event) input-key-code-s)
+              (set! player-vel-y player-move-speed)
+              (if (equal? (input-event-key-code input-event) input-key-code-a)
+                  (set! player-vel-x (- 0 player-move-speed))
+                  (if (equal? (input-event-key-code input-event) input-key-code-d)
+                      (set! player-vel-x player-move-speed)
+                      (if (equal? (input-event-key-code input-event) input-key-code-space)
+                          (shoot-bullet (+ player-x (/ player-size 2))
+                                        (- player-y bullet-size)
+                                        (- 0 default-bullet-speed)))))))
+      (if (input-event-key-up? input-event)
+          (if (or (equal? (input-event-key-code input-event) input-key-code-w)
+                  (equal? (input-event-key-code input-event) input-key-code-s))
+              (set! player-vel-y 0)
+              (if (or (equal? (input-event-key-code input-event) input-key-code-a)
+                      (equal? (input-event-key-code input-event) input-key-code-d))
+                  (set! player-vel-x 0))))))
+
+(define (handle-input-events)
+  (let next-event ((input-event (input-event-take input-state)))
+    (if input-event
+        (begin
+          (handle-player-input input-event)
+          (next-event (input-event-take input-state))))))
+
 (define (game-updater time-delta)
   (if (not (window-needs-close? window))
-      (let next-event ((input-event (input-event-take input-state)))
-        (if input-event
-            (next-event (input-event-take input-state))
-            ;; Make sure we don't exit the game loop
-            t))))
+      (begin
+        (handle-input-events)
+        (player-update time-delta)
+        (set! bullet-list (update-bullets time-delta))
+
+        ;; Make sure we don't exit the game loop
+        t)))
+
+(define (update-bullets time-delta)
+  (let next-bullet ((bullets bullet-list)
+                    (new-bullets '()))
+    (if (pair? bullets)
+        (let ((bullet (car bullets)))
+          ;; Move the bullet
+          (bullet-y-set! bullet (+ (bullet-y bullet)
+                                   (* (bullet-vel-y bullet) time-delta)))
+
+          ;; TODO: Check for collision
+
+          ;; Check if bullet is still on screen
+          (if (> (+ (bullet-y bullet) bullet-size) 0)
+              (set! new-bullets (cons bullet new-bullets))
+              (display "Removed bullet!\n"))
+
+          (next-bullet (cdr bullets) new-bullets))
+
+        ;; Return the updated bullets list
+        new-bullets)))
+
+(define (render-bullets renderer)
+  (let next-bullet ((bullets bullet-list))
+    (if (pair? bullets)
+        (let ((bullet (car bullets)))
+          (renderer-draw-rect renderer
+                              (bullet-x bullet)
+                              (bullet-y bullet)
+                              bullet-size bullet-size
+                              bullet-color)
+          (next-bullet (cdr bullets))))))
 
 (define (game-renderer renderer)
   ;; Clear the screen
   (renderer-clear renderer 0 0 0)
+
+  ;; Render the player's ship
+  (renderer-draw-rect renderer
+                      player-x player-y
+                      player-size player-size
+                      player-ship-color)
+
+  ;; Render the bullets
+  (render-bullets renderer)
+
+  ;; (display (string-append "VEL X: " (number->string player-vel-x) "\n"))
+  ;; (display (string-append "VEL Y: " (number->string player-vel-y) "\n"))
 
   ;; Render the FPS
   (let ((fps (current-fps)))
