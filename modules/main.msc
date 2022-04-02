@@ -103,7 +103,7 @@
 
 ;; This will be adjusted over time
 (define enemy-spawn-interval-base 0.5)
-(define enemy-spawn-interval-range 3.5)
+(define enemy-spawn-interval-range 3.0)
 (define enemy-spawn-interval-scale 1.0)
 (define enemy-spawn-time 0)
 
@@ -117,6 +117,11 @@
           color
           shield
           sphere
+          weapon
+          fire-time
+          next-fire-time
+          max-fire-length
+          max-fire-interval
           update-func))
 
 (define drone-speed 250)
@@ -124,8 +129,8 @@
 (define (spawn-enemy)
   (spawn-drone))
 
-(define (check-for-spawns time-step)
-  (set! enemy-spawn-time (+ enemy-spawn-time time-step))
+(define (check-for-spawns time-delta)
+  (set! enemy-spawn-time (+ enemy-spawn-time time-delta))
   (if (> enemy-spawn-time
          (+ (* enemy-spawn-interval-range
                (/ (- max-level-time total-level-time)
@@ -135,9 +140,9 @@
         (set! enemy-spawn-time 0)
         (spawn-enemy))))
 
-(define (update-drone enemy time-step)
+(define (update-drone enemy time-delta)
   ;; Update position
-  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-step)))
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-delta)))
 
   ;; Is it time to shoot?
   )
@@ -153,11 +158,16 @@
                             :shield 10
                             :score 100
                             :sphere (make-sphere x y (/ size 2))
+                            :weapon blaster-weapon
+                            :fire-time 0
+                            :next-fire-time 1.7
+                            :max-fire-length 0.5
+                            :max-fire-interval 2.5
                             :color (rgb 234 255 0)
                             :update-func update-drone)
                 enemy-list))))
 
-(define (update-enemies time-step)
+(define (update-enemies time-delta)
   (let next-enemy ((enemies enemy-list)
                    (new-enemies '()))
     (if (pair? enemies)
@@ -166,7 +176,23 @@
           (if (> (enemy-shield enemy) 0)
               (begin
                 ;; Update the enemy
-                ((enemy-update-func enemy) enemy time-step)
+                ((enemy-update-func enemy) enemy time-delta)
+
+                ;; Should we fire?
+                (enemy-fire-time-set! enemy (+ (enemy-fire-time enemy) time-delta))
+                (if (> (enemy-fire-time enemy)
+                       (enemy-next-fire-time enemy))
+                    (begin
+                      ;; Reset the fire time
+                      (enemy-fire-time-set! enemy 0)
+
+                      ;; Fire the weapon
+                      (fire-weapon (enemy-x enemy)
+                                   (enemy-y enemy)
+                                   1    ; Positive y direction
+                                   (enemy-weapon enemy)
+                                   time-delta
+                                   'enemy)))
 
                 ;; Set the sphere center
                 (sphere-center-x-set! (enemy-sphere enemy)
@@ -202,6 +228,27 @@
                               (enemy-color enemy))
 
           (next-enemy (cdr enemies))))))
+
+;;; -- Weapon --
+
+(define-record-type weapon
+  (fields damage
+          bullet-speed
+          fire-rate
+          fire-time))
+
+(define (fire-weapon x y y-dir weapon time-delta owner)
+  (shoot-bullet x y
+                (* y-dir (weapon-bullet-speed weapon))
+                (weapon-damage weapon)
+                owner))
+
+(define blaster-weapon (make-weapon :damage 10
+                                    :bullet-speed 700
+                                    :fire-rate 1
+                                    :fire-time 0))
+
+;; define (shoot-bullet x y vel-y damage owner)
 
 ;;; -- Bullets --
 
@@ -288,10 +335,10 @@
 (define shield-meter-color (rgb 158 252 255))
 (define energy-meter-color (rgb 255 105 41))
 
-(define (update-hud time-step)
+(define (update-hud time-delta)
   (if (< score-current score-total)
       (set! score-current (min score-total
-                               (+ score-current (* score-scroll-speed time-step))))))
+                               (+ score-current (* score-scroll-speed time-delta))))))
 
 (define (render-hud renderer)
   (renderer-draw-rect renderer
@@ -364,6 +411,9 @@
   ;; Clear the screen
   (renderer-clear renderer 0 0 0)
 
+  ;; Render the bullets
+  (render-bullets renderer)
+
   ;; Render the player's ship
   (renderer-draw-rect renderer
                       player-x player-y
@@ -372,9 +422,6 @@
 
   ;; Render the enemies
   (render-enemies renderer)
-
-  ;; Render the bullets
-  (render-bullets renderer)
 
   ;; Render the HUD
   (render-hud renderer)
