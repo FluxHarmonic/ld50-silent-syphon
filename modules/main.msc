@@ -29,6 +29,9 @@
 
 ;;; -- Game --
 
+(define score-total 0)
+(define score-current 0)
+(define score-scroll-speed 150)
 (define total-level-time 0)
 (define max-level-time 180)
 
@@ -110,6 +113,7 @@
   (fields x
           y
           size
+          score
           color
           shield
           sphere
@@ -147,6 +151,7 @@
                             :y y
                             :size size
                             :shield 10
+                            :score 100
                             :sphere (make-sphere x y (/ size 2))
                             :color (rgb 234 255 0)
                             :update-func update-drone)
@@ -172,7 +177,10 @@
                 ;; Check if enemy is still on screen
                 (if (< (enemy-y enemy)
                        (window-height window))
-                    (set! new-enemies (cons enemy new-enemies)))))
+                    (set! new-enemies (cons enemy new-enemies))))
+
+              ;; Give the player some score
+              (set! score-total (+ score-total (enemy-score enemy))))
 
           (next-enemy (cdr enemies) new-enemies))
 
@@ -280,6 +288,11 @@
 (define shield-meter-color (rgb 158 252 255))
 (define energy-meter-color (rgb 255 105 41))
 
+(define (update-hud time-step)
+  (if (< score-current score-total)
+      (set! score-current (min score-total
+                               (+ score-current (* score-scroll-speed time-step))))))
+
 (define (render-hud renderer)
   (renderer-draw-rect renderer
                       (- (window-width window) hud-width)
@@ -304,7 +317,14 @@
                            energy-meter-height)
                         40
                         energy-meter-height
-                        energy-meter-color)))
+                        energy-meter-color))
+
+  ;; Draw the score
+  (render-text renderer
+               bitmap-font
+               (string-append "Score: " (number->string score-current))
+               (- (window-width window) 270)
+               150))
 
 ;;; -- Input --
 
@@ -334,6 +354,9 @@
         (check-for-spawns time-delta)
         (set! enemy-list (update-enemies time-delta))
 
+        ;; Update the HUD
+        (update-hud time-delta)
+
         ;; Make sure we don't exit the game loop
         t)))
 
@@ -361,7 +384,7 @@
     (if fps
         (render-text renderer
                      bitmap-font
-                     (string-append "FPS: " (number->string fps))
+                     (string-append "FPS: " (number->string fps 3))
                      (- (window-width window) 220)
                      60))))
 
