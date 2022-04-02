@@ -76,6 +76,12 @@ CLOSED: [2022-04-02 Sat 17:24]
 - State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
 :END:
 ** TODO Restrict gameplay to the visible area (sans HUD)
+** TODO Tweak configurations of existing enemies
+** TODO Add energy syphoning
+** TODO Add pickup objects (shield, energy, maybe weapon?)
+** TODO Add energy depletion when moving and shooting
+** TODO Add manual shielding which also depletes
+** TODO Make basic game sprites
 
 * Mesche Issues
 
