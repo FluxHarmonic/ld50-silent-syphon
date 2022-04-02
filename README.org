@@ -1,5 +1,7 @@
 #+title: Silent Syphon - A Ludum Dare 50 Compo Entry
 
+The theme for this Ludum Dare is *Delay the Inevitable*!
+
 * The Concept
 
 - Top-down space shooter game
@@ -21,7 +23,21 @@ Repo: https://github.com/FluxHarmonic/ld50-silent-syphon
 
 * Tasks
 
-** TODO Get basic player ship rendering and moving using keyboard keys
-** TODO Implement basic shooting (bullet particles)
-** TODO Add basic enemy spawning
+** DONE Get basic player ship rendering and moving using keyboard keys
+CLOSED: [2022-04-02 Sat 08:17]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 08:17]
+:END:
+** DONE Implement basic shooting (bullet particles)
+CLOSED: [2022-04-02 Sat 08:50]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 08:50]
+:END:
+** DONE Add basic enemy spawning
+CLOSED: [2022-04-02 Sat 09:35]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 09:35]
+:END:
+** TODO Add shield and energy meters
+** TODO Add bullet collision detection
 ** TODO Add basic enemy AI (shoot at player, have predefined movement pattern)
