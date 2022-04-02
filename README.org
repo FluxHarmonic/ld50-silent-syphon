@@ -55,8 +55,16 @@ CLOSED: [2022-04-02 Sat 13:28]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 13:28]
 :END:
-** TODO Add basic enemy AI (shoot at player, have predefined movement pattern)
-** TODO Create another more interesting enemy with more shield quanity
+** DONE Add basic enemy AI (shoot at player, have predefined movement pattern)
+CLOSED: [2022-04-02 Sat 14:18]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 14:18]
+:END:
+** DONE Create another more interesting enemy with more shield quanity
+CLOSED: [2022-04-02 Sat 14:18]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-02 Sat 14:18]
+:END:
 ** TODO Add player shield damage
 ** TODO Speed up the enemy spawning
 ** TODO Restrict gameplay to the visible area (sans HUD)

@@ -112,12 +112,14 @@
 (define-record-type enemy
   (fields x
           y
+          base-x
           size
           score
           color
           shield
           sphere
           weapon
+          life-time
           fire-time
           next-fire-time
           max-fire-length
@@ -127,7 +129,8 @@
 (define drone-speed 250)
 
 (define (spawn-enemy)
-  (spawn-drone))
+  ((array-nth enemy-spawners
+              (rand-int (array-length enemy-spawners)))))
 
 (define (check-for-spawns time-delta)
   (set! enemy-spawn-time (+ enemy-spawn-time time-delta))
@@ -142,10 +145,7 @@
 
 (define (update-drone enemy time-delta)
   ;; Update position
-  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-delta)))
-
-  ;; Is it time to shoot?
-  )
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* 300 time-delta))))
 
 (define (spawn-drone)
   (let ((x (rand-int (- (window-width window) 100)))
@@ -154,11 +154,13 @@
     (set! enemy-list
           (cons (make-enemy :x x
                             :y y
+                            :base-x x
                             :size size
                             :shield 10
                             :score 100
                             :sphere (make-sphere x y (/ size 2))
                             :weapon blaster-weapon
+                            :life-time 0
                             :fire-time 0
                             :next-fire-time 1.7
                             :max-fire-length 0.5
@@ -166,6 +168,38 @@
                             :color (rgb 234 255 0)
                             :update-func update-drone)
                 enemy-list))))
+
+(define (update-slider enemy time-delta)
+  ;; Update position
+  (enemy-x-set! enemy (+ (enemy-base-x enemy)
+                         (* (sin (* 3 (enemy-life-time enemy))) 100)))
+  (enemy-y-set! enemy (+ (enemy-y enemy) (* drone-speed time-delta))))
+
+(define (spawn-slider)
+  (let ((x (rand-int (- (window-width window) 100)))
+        (y -100)
+        (size 70))
+    (set! enemy-list
+          (cons (make-enemy :x x
+                            :y y
+                            :base-x x
+                            :size size
+                            :shield 10
+                            :score 100
+                            :sphere (make-sphere x y (/ size 2))
+                            :weapon blaster-weapon
+                            :life-time 0
+                            :fire-time 0
+                            :next-fire-time 1.7
+                            :max-fire-length 0.5
+                            :max-fire-interval 2.5
+                            :color (rgb 187 255 0)
+                            :update-func update-slider)
+                enemy-list))))
+
+(define enemy-spawners (make-array))
+(array-push enemy-spawners spawn-drone)
+(array-push enemy-spawners spawn-slider)
 
 (define (update-enemies time-delta)
   (let next-enemy ((enemies enemy-list)
@@ -175,6 +209,9 @@
           ;; Is the enemy still alive?
           (if (> (enemy-shield enemy) 0)
               (begin
+                ;; Increase the life time
+                (enemy-life-time-set! enemy (+ (enemy-life-time enemy) time-delta))
+
                 ;; Update the enemy
                 ((enemy-update-func enemy) enemy time-delta)
 
