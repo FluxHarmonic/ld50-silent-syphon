@@ -1,0 +1,27 @@
+#+title: Silent Syphon - A Ludum Dare 50 Compo Entry
+
+* The Concept
+
+- Top-down space shooter game
+- Your ship is running out of energy
+- How long can you last until the ship runs out of energy?
+- You can siphon energy off of enemy ships
+- But you can't siphon off of ships that you destroy!
+
+Name: Silent Syphon
+
+Repo: https://github.com/FluxHarmonic/ld50-silent-syphon
+
+* Development Strategy
+
+- Get basic game mechanics working as fast as possible, it needs to be playable to be an entry!
+- After basic game mechanics (movement, shooting, siphoning, enemy spawning, etc) are working, we'll start making sprites for everything, but at low level of quality
+- For art, possibly stick with a 16 color palette of (maybe) reds and blues with a green accent
+- After basic game loop is working, start adding new features to make it fun
+
+* Tasks
+
+** TODO Get basic player ship rendering and moving using keyboard keys
+** TODO Implement basic shooting (bullet particles)
+** TODO Add basic enemy spawning
+** TODO Add basic enemy AI (shoot at player, have predefined movement pattern)

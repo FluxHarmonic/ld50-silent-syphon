@@ -1,0 +1,53 @@
+(define-module (silent-syphon main)
+  (import (mesche array)
+          (mesche math)
+          (mesche list)
+          (mesche time)
+          (mesche string)
+          (substratic font)
+          (substratic input)
+          (substratic engine)
+          (substratic window)
+          (substratic texture)
+          (substratic renderer)))
+
+(define window (window-create 1280 720 "Silent Syphon"))
+(define input-state (input-init window))
+(define renderer (renderer-create window))
+
+;; Load game assets
+(define bitmap-font (font-load-file "assets/fonts/Thintel.ttf" 75))
+
+(define screen-scale 4.0)
+
+;; Show the window
+(window-show window)
+
+;; Get an fps counter
+(define current-fps (make-fps-counter))
+
+(define (game-updater time-delta)
+  (if (not (window-needs-close? window))
+      (let next-event ((input-event (input-event-take input-state)))
+        (if input-event
+            (next-event (input-event-take input-state))
+            ;; Make sure we don't exit the game loop
+            t))))
+
+(define (game-renderer renderer)
+  ;; Clear the screen
+  (renderer-clear renderer 0 0 0)
+
+  ;; Render the FPS
+  (let ((fps (current-fps)))
+    (if fps
+        (render-text renderer
+                     bitmap-font
+                     (string-append "FPS: " (number->string fps))
+                     (- (window-width window) 220)
+                     60))))
+
+;; This will run the game functions until the updater returns nil
+(run-engine-loop :renderer renderer
+                 :update-func game-updater
+                 :render-func game-renderer)
