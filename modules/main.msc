@@ -214,6 +214,40 @@
   (set! bullet-list (cons (make-bullet :x x :y y :vel-y vel-y)
                           bullet-list)))
 
+;;; -- HUD --
+
+(define hud-width 300)
+(define meter-height 300)
+(define hud-color (rgb 92 87 85))
+(define shield-meter-color (rgb 158 252 255))
+(define energy-meter-color (rgb 255 105 41))
+
+(define (render-hud renderer)
+  (renderer-draw-rect renderer
+                      (- (window-width window) hud-width)
+                      0
+                      (window-width window)
+                      (window-height window)
+                      hud-color)
+
+  (let ((shield-meter-height (* player-shield-amount meter-height)))
+    (renderer-draw-rect renderer
+                        (- (window-width window) 190)
+                        (- (- (window-height window) 100)
+                           shield-meter-height)
+                        40
+                        shield-meter-height
+                        shield-meter-color))
+
+  (let ((energy-meter-height (* player-energy-amount meter-height)))
+    (renderer-draw-rect renderer
+                        (- (window-width window) 135)
+                        (- (- (window-height window) 100)
+                           energy-meter-height)
+                        40
+                        energy-meter-height
+                        energy-meter-color)))
+
 ;;; -- Input --
 
 (define (handle-input-events)
@@ -261,8 +295,8 @@
   ;; Render the bullets
   (render-bullets renderer)
 
-  ;; (display (string-append "VEL X: " (number->string player-vel-x) "\n"))
-  ;; (display (string-append "VEL Y: " (number->string player-vel-y) "\n"))
+  ;; Render the HUD
+  (render-hud renderer)
 
   ;; Render the FPS
   (let ((fps (current-fps)))
