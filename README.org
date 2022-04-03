@@ -4,7 +4,7 @@ The theme for this Ludum Dare is *Delay the Inevitable*!
 
 * Download The Game
 
-You can try out a development builds of the game here:
+You can try out a development build of the game here:
 
 - *[[https://github.com/FluxHarmonic/ld50-silent-syphon/releases/download/dev/silent-syphon-linux.zip][Linux]]* (tested on Ubuntu 20.04)
 - Windows support coming soon!
