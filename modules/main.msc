@@ -117,7 +117,13 @@
                small-font
                (string-append "Score: " (number->string (game-score-current game)))
                (- (window-width window) 270)
-               150))
+               150)
+
+  (render-text renderer
+               small-font
+               (string-append "Time: " (number->string (game-level-time game)))
+               (- (window-width window) 270)
+               205))
 
 ;;; -- Input --
 
@@ -141,8 +147,9 @@
 ;;; -- Siphoning --
 
 (define siphon-sphere (make-sphere 0 0 player-size))
+(define siphon-score-rate 50)
 
-(define (siphon-energy player enemies time-delta)
+(define (siphon-energy game player enemies time-delta)
   (sphere-center-x-set! siphon-sphere (player-x player))
   (sphere-center-y-set! siphon-sphere (player-y player))
 
@@ -151,6 +158,10 @@
         (begin
           (if (sphere-intersect? siphon-sphere
                                  (enemy-sphere (car enemies)))
+              ;; Add score for siphoning
+              (game-score-total-set! game (+ (game-score-total game)
+                                             (* siphon-score-rate time-delta)))
+
               ;; TODO: Render indicator of siphoned enemy?
               (player-energy-amount-set! player
                                          (min 100
@@ -166,14 +177,14 @@
 (define (game-updater time-delta)
   (if (not (window-needs-close? window))
       (begin
-        ;; Count how much time we've been in the level
-        (game-level-time-set! current-game
-                              (+ (game-level-time current-game)
-                                 time-delta))
-
         ;; If we're still playing, update game entities
         (if (equal? (game-state current-game) 'playing)
             (begin
+              ;; Count how much time we've been in the level
+              (game-level-time-set! current-game
+                                    (+ (game-level-time current-game)
+                                       time-delta))
+
               ;; Update the player
               (handle-input-events current-game)
               (update-player (game-player current-game)
@@ -211,7 +222,8 @@
 
               ;; Siphon energy if necessary
               (if (controller-siphon (game-controller current-game))
-                  (siphon-energy (game-player current-game)
+                  (siphon-energy current-game
+                                 (game-player current-game)
                                  (game-enemies current-game)
                                  time-delta))
 

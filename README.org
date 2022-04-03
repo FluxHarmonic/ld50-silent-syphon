@@ -145,11 +145,22 @@ CLOSED: [2022-04-03 Sun 16:10]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 16:10]
 :END:
-** TODO Add energy siphoning (with scoring)
-** TODO Add a time counter for how long you stayed alive
+** DONE Add a time counter for how long you stayed alive
+CLOSED: [2022-04-03 Sun 16:51]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-03 Sun 16:51]
+:END:
+** DONE Add energy siphoning (with scoring)
+CLOSED: [2022-04-03 Sun 16:53]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-03 Sun 16:53]
+:END:
 ** TODO Add pickup objects (shield, energy, maybe weapon?)
-** TODO Tweak configurations of existing enemies
+** TODO Add a main menu with keyboard help
+** TODO Add indicators for shield and energy meters
+
 ** TODO Add manual shielding which also depletes
+** TODO Tweak configurations of existing enemies
 ** TODO Maybe add a third enemy?
 ** TODO Restrict gameplay to the visible area (sans HUD)
 ** TODO Make basic game sprites
