@@ -34,7 +34,7 @@
 
 ;; Define some game state
 (define player-ship-color (rgb 100 100 255))
-(define player-size 150 :export)
+(define player-size 100 :export)
 (define player-move-speed 500)            ; Pixels per second
 (define player-energy-depletion 1)
 

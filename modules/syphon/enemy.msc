@@ -65,7 +65,7 @@
 (define (spawn-drone window)
   (let ((x (rand-int (- (window-width window) 100)))
         (y -100)
-        (size 100))
+        (size 110))
     (make-enemy :x x
                 :y y
                 :base-x x
