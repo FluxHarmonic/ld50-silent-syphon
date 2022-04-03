@@ -28,6 +28,29 @@ If you're on Ubuntu, you can run the following command to install the necessary 
 
 If you have issues running the game, first try updating your system in case libraries are out of date.  If you still run into trouble, please [[https://github.com/FluxHarmonic/ld50-silent-syphon/issues][file an issue]]!
 
+* How To Play
+
+The goal of the game is to last as long as you can flying between enemy ships before your ship's energy runs out!
+
+You can gain more energy by siphoning from other ships (*hold K* near another ship) or by collecting energy tank drops from felled ships.
+
+You can also move around and fight back against ships that are in your way, but be aware that these actions cost energy and might make you deplete faster!
+
+If you are killed by the enemies or run out of energy, you will be asked if you want to play again, so *press Y* to boot up a new ship to give it another try.
+
+Here are the controls:
+
+*Movement*
+
+- *W*: Fly forward
+- *S*: Fly backward
+- *A*: Fly left
+- *D*: Fly right
+
+*Actions*
+
+- *Space*: Fire weapon
+
 * The Concept
 
 - Top-down space shooter game
