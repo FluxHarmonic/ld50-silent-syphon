@@ -33,9 +33,18 @@ jobs:
         run: |
           rm -rf dist
           ./bin/mesche build dist --config release
+          zip -r silent-syphon-linux.zip dist/*
 
-      - name: Upload Build Package
-        uses: actions/upload-artifact@v2
+      # - name: Upload Build Artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: silent-syphon-linux
+      #     path: dist/*
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        # if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: silent-syphon-linux
-          path: dist/*
+          name: Silent Syphon - Dev Build
+          tag_name: dev
+          files: silent-syphon-linux.zip
