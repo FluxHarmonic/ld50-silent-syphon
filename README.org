@@ -2,6 +2,27 @@
 
 The theme for this Ludum Dare is *Delay the Inevitable*!
 
+* Trying It Out!
+
+You can try out development builds of the game (*Linux Only* for now!) by downloading the =silent-syphon-linux= artifact from the latest CI run here:
+
+https://github.com/FluxHarmonic/ld50-silent-syphon/actions
+
+You will need to have the following dependencies installed:
+
+- OpenGL
+- GLFW 3
+- libfontconfig
+- zlib
+
+If you're on Ubuntu, you can run the following command to install the necessary dependencies:
+
+#+begin_src sh
+
+  sudo apt-get --no-install-recommends -y install libglfw3 zlib1g libfontconfig1 mesa-utils libgl1-mesa-glx
+
+#+end_src
+
 * The Concept
 
 - Top-down space shooter game
@@ -75,9 +96,12 @@ CLOSED: [2022-04-02 Sat 17:24]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
 :END:
+** TODO Set up CI for the game
+** TODO Produce working game builds for Ubuntu 20.04
+** TODO Improve ship control
 ** TODO Restrict gameplay to the visible area (sans HUD)
 ** TODO Tweak configurations of existing enemies
-** TODO Add energy syphoning
+** TODO Add energy siphoning
 ** TODO Add pickup objects (shield, energy, maybe weapon?)
 ** TODO Add energy depletion when moving and shooting
 ** TODO Add manual shielding which also depletes
