@@ -138,6 +138,27 @@
               (handle-prompt-input input-event))
           (next-event (input-event-take input-state))))))
 
+;;; -- Siphoning --
+
+(define siphon-sphere (make-sphere 0 0 player-size))
+
+(define (siphon-energy player enemies time-delta)
+  (sphere-center-x-set! siphon-sphere (player-x player))
+  (sphere-center-y-set! siphon-sphere (player-y player))
+
+  (let next-enemy ((enemies enemies))
+    (if (pair? enemies)
+        (begin
+          (if (sphere-intersect? siphon-sphere
+                                 (enemy-sphere (car enemies)))
+              ;; TODO: Render indicator of siphoned enemy?
+              (player-energy-amount-set! player
+                                         (min 100
+                                              (+ (player-energy-amount player)
+                                                 (* (enemy-siphon-rate (car enemies))
+                                                    time-delta)))))
+          (next-enemy (cdr enemies))))))
+
 ;;; -- Game Loop --
 
 (define current-game (initialize-game))
@@ -187,6 +208,12 @@
                                                                             (game-bullets current-game))))
                                                  time-delta
                                                  window))
+
+              ;; Siphon energy if necessary
+              (if (controller-siphon (game-controller current-game))
+                  (siphon-energy (game-player current-game)
+                                 (game-enemies current-game)
+                                 time-delta))
 
               ;; Check for collisions
               (check-collisions (game-player current-game)

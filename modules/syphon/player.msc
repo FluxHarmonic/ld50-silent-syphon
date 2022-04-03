@@ -34,7 +34,7 @@
 
 ;; Define some game state
 (define player-ship-color (rgb 100 100 255))
-(define player-size 150)
+(define player-size 150 :export)
 (define player-move-speed 500)            ; Pixels per second
 (define player-energy-depletion 1)
 
@@ -125,7 +125,8 @@
         (move-player player time-delta)
 
         ;; Fire the weapon if it's time
-        (if (controller-fire controller)
+        (if (and (not (controller-siphon controller))
+                 (controller-fire controller))
             ;; Fire the weapon
             (player-fire-weapon player
                                 (player-weapon player)

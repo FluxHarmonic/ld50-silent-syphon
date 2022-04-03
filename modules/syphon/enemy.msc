@@ -31,6 +31,7 @@
           shield
           sphere
           weapon
+          siphon-rate
           life-time
           fire-time
           next-fire-time
@@ -73,6 +74,7 @@
                 :score 100
                 :sphere (make-sphere x y (/ size 2))
                 :weapon blaster-weapon
+                :siphon-rate 5
                 :life-time 0
                 :fire-time 0
                 :next-fire-time 1.7
@@ -99,6 +101,7 @@
                 :score 100
                 :sphere (make-sphere x y (/ size 2))
                 :weapon blaster-weapon
+                :siphon-rate 10
                 :life-time 0
                 :fire-time 0
                 :next-fire-time 1.7
