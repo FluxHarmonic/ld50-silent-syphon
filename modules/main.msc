@@ -72,9 +72,9 @@
 
 ;;; -- HUD --
 
-(define hud-width 300)
+(define hud-width 250)
 (define meter-height 300)
-(define hud-color (rgb 92 87 85))
+(define hud-color (rgba 92 87 85 90))
 (define shield-meter-color (rgb 158 252 255))
 (define energy-meter-color (rgb 255 105 41))
 
@@ -89,24 +89,40 @@
 (define (render-hud renderer game player window)
   (renderer-draw-rect renderer
                       (- (window-width window) hud-width)
-                      0
+                      (- (window-height window) 520)
                       (window-width window)
                       (window-height window)
                       hud-color)
 
-  (let ((shield-meter-height (* (/ (player-shield-amount player) 100) meter-height)))
+
+  (let ((shield-meter-height (* (/ (player-shield-amount player) 100) meter-height))
+        (shield-meter-x (- (window-width window) 190)))
+
+    (render-text renderer
+                 small-font
+                 "S"
+                 (+ shield-meter-x 11)
+                 (- (- (window-height window) 70)
+                    meter-height))
     (renderer-draw-rect renderer
-                        (- (window-width window) 190)
-                        (- (- (window-height window) 100)
+                        shield-meter-x
+                        (- (- (window-height window) 50)
                            shield-meter-height)
                         40
                         shield-meter-height
                         shield-meter-color))
 
-  (let ((energy-meter-height (* (/ (player-energy-amount player) 100) meter-height)))
+  (let ((energy-meter-height (* (/ (player-energy-amount player) 100) meter-height))
+        (energy-meter-x (- (window-width window) 135)))
+    (render-text renderer
+                 small-font
+                 "E"
+                 (+ energy-meter-x 11)
+                 (- (- (window-height window) 70)
+                    meter-height))
     (renderer-draw-rect renderer
-                        (- (window-width window) 135)
-                        (- (- (window-height window) 100)
+                        energy-meter-x
+                        (- (- (window-height window) 50)
                            energy-meter-height)
                         40
                         energy-meter-height
@@ -116,14 +132,14 @@
   (render-text renderer
                small-font
                (string-append "Score: " (number->string (game-score-current game)))
-               (- (window-width window) 270)
-               150)
+               (- (window-width window) 210)
+               (- (window-height window) 420))
 
   (render-text renderer
                small-font
                (string-append "Time: " (number->string (game-level-time game)))
-               (- (window-width window) 270)
-               205))
+               (- (window-width window) 210)
+               (- (window-height window) 470)))
 
 ;;; -- Input --
 
