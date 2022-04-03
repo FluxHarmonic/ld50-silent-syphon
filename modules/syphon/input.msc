@@ -53,8 +53,8 @@
         (cons input-key-code-s down-command)
         (cons input-key-code-a left-command)
         (cons input-key-code-d right-command)
-        (cons input-key-code-j fire-command)
-        (cons input-key-code-k siphon-command)))
+        (cons input-key-code-j siphon-command)
+        (cons input-key-code-k fire-command)))
 
 (define (handle-controller-input controller input-event) :export
   (let next-key ((mappings key-mappings))
