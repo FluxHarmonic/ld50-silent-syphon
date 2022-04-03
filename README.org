@@ -134,14 +134,25 @@ CLOSED: [2022-04-03 Sun 11:43]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 11:43]
 :END:
-** TODO Improve ship control
-** TODO Restrict gameplay to the visible area (sans HUD)
-** TODO Tweak configurations of existing enemies
-** TODO Add energy siphoning
+** DONE Improve ship control
+CLOSED: [2022-04-03 Sun 16:03]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-03 Sun 16:03]
+:END:
+** DONE Add energy depletion when moving and shooting
+CLOSED: [2022-04-03 Sun 16:10]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-03 Sun 16:10]
+:END:
+** TODO Add energy siphoning (with scoring)
+** TODO Add a time counter for how long you stayed alive
 ** TODO Add pickup objects (shield, energy, maybe weapon?)
-** TODO Add energy depletion when moving and shooting
+** TODO Tweak configurations of existing enemies
 ** TODO Add manual shielding which also depletes
+** TODO Maybe add a third enemy?
+** TODO Restrict gameplay to the visible area (sans HUD)
 ** TODO Make basic game sprites
+** TODO The graphics look kinda huge on non-hidpi displays
 
 * Mesche Issues
 
@@ -150,3 +161,7 @@ I need to investigate these issues:
 ** TODO Heap overflow in a nested =if= -> =begin= in =update-player=, is the chunk too big?
 ** TODO Circular module reference issues with =syphon player= and =syphon weapon=
 ** TODO Implement better pattern for updating record field values (pass lambda to mutate)
+** TODO Make it possible to set default value for keyword arguments
+** TODO Somehow record instances are not initialized correctly when given no keyword args
+** TODO Investigate heap overflow with =begin= in =player.msc=
+** TODO Investigate heap overflow or bad tail call patching in =update-player='s old incarnation
