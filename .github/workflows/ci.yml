@@ -20,11 +20,22 @@ jobs:
         with:
           artifact-token: ${{ secrets.ARTIFACT_TOKEN }}
 
+      - name: Debug Build
+        run: ./bin/mesche build dist --config debug
+
+      - name: Upload Debug Package
+        uses: actions/upload-artifact@v2
+        with:
+          name: silent-syphon-linux-debug
+          path: dist/*
+
       - name: Release Build
-        run: ./bin/mesche build dist --config release
+        run: |
+          rm -rf dist
+          ./bin/mesche build dist --config release
 
       - name: Upload Build Package
         uses: actions/upload-artifact@v2
         with:
-          name: silent-syphon
+          name: silent-syphon-linux
           path: dist/*
