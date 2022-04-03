@@ -2,4 +2,5 @@
 compiler/
 bin/
 deps/
+dist/
 tools/
