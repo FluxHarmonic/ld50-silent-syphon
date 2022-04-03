@@ -6,7 +6,7 @@ The theme for this Ludum Dare is *Delay the Inevitable*!
 
 You can try out a development builds of the game here:
 
-- *[[https://github.com/FluxHarmonic/ld50-silent-syphon/releases/downloads/dev/silent-syphon-linux.zip][Linux]]* (tested on Ubuntu 20.04)
+- *[[https://github.com/FluxHarmonic/ld50-silent-syphon/releases/download/dev/silent-syphon-linux.zip][Linux]]* (tested on Ubuntu 20.04)
 - Windows support coming soon!
 
 You will need to have the following dependencies installed:
@@ -23,6 +23,10 @@ If you're on Ubuntu, you can run the following command to install the necessary 
   sudo apt-get --no-install-recommends -y install libglfw3 zlib1g libfontconfig1 mesa-utils libgl1-mesa-glx
 
 #+end_src
+
+** Troubleshooting
+
+If you have issues running the game, first try updating your system in case libraries are out of date.  If you still run into trouble, please [[https://github.com/FluxHarmonic/ld50-silent-syphon/issues][file an issue]]!
 
 * The Concept
 
