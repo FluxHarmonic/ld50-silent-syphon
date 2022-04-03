@@ -12,6 +12,7 @@
           (substratic texture)
           (substratic renderer)
           (syphon enemy)
+          (syphon input)
           (syphon player)
           (syphon weapon)
           (syphon bullet)
@@ -42,6 +43,7 @@
 (define-record-type game
   (fields state
           player
+          controller
           score-total
           score-current
           level-time
@@ -51,6 +53,7 @@
 (define (initialize-game)
   (make-game :state 'playing
              :player (create-player window)
+             :controller (create-controller)
              :score-total 0
              :score-current 0
              :level-time 0
@@ -130,7 +133,8 @@
     (if input-event
         (begin
           (if (equal? (game-state current-game) 'playing)
-              (handle-player-input (game-player game) input-event)
+              (handle-controller-input (game-controller current-game)
+                                       input-event)
               (handle-prompt-input input-event))
           (next-event (input-event-take input-state))))))
 
@@ -152,6 +156,7 @@
               ;; Update the player
               (handle-input-events current-game)
               (update-player (game-player current-game)
+                             (game-controller current-game)
                              (lambda (bullet)
                                (game-bullets-set! current-game
                                                   (cons bullet

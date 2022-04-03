@@ -1,0 +1,65 @@
+(define-module (syphon input)
+  (import (mesche list)
+          (substratic input)))
+
+(define-record-type controller
+  (fields up down
+          left right
+          fire
+          siphon
+          shield))
+
+(define (create-controller) :export
+  (make-controller :up nil
+                   :down nil
+                   :left nil
+                   :right nil
+                   :fire nil
+                   :siphon nil
+                   :shield nil))
+
+(define (up-command controller input-event)
+  (controller-up-set! controller
+                      (input-event-key-down? input-event)))
+
+(define (down-command controller input-event)
+  (controller-down-set! controller
+                        (input-event-key-down? input-event)))
+
+(define (left-command controller input-event)
+  (controller-left-set! controller
+                        (input-event-key-down? input-event)))
+
+(define (right-command controller input-event)
+  (controller-right-set! controller
+                         (input-event-key-down? input-event)))
+
+(define (fire-command controller input-event)
+  (controller-fire-set! controller
+                        (input-event-key-down? input-event)))
+
+(define (siphon-command controller input-event)
+  (controller-siphon-set! controller
+                          (input-event-key-down? input-event)))
+
+
+;; Controls:
+;; WSAD for directional
+;; J to shoot
+;; K to siphon
+
+(define key-mappings
+  (list (cons input-key-code-w up-command)
+        (cons input-key-code-s down-command)
+        (cons input-key-code-a left-command)
+        (cons input-key-code-d right-command)
+        (cons input-key-code-j fire-command)
+        (cons input-key-code-k siphon-command)))
+
+(define (handle-controller-input controller input-event) :export
+  (let next-key ((mappings key-mappings))
+    (if (pair? mappings)
+        (if (equal? (car (car mappings))
+                    (input-event-key-code input-event))
+            ((cdr (car mappings)) controller input-event)
+            (next-key (cdr mappings))))))

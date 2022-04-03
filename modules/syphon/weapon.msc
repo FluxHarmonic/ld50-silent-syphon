@@ -6,7 +6,7 @@
   (fields damage
           bullet-speed
           fire-rate
-          fire-time))
+          energy-cost))
 
 (define (fire-weapon weapon x y y-dir time-delta owner) :export
   (make-bullet :x x :y y
@@ -20,4 +20,4 @@
   (make-weapon :damage 20
                :bullet-speed 700
                :fire-rate 1
-               :fire-time 0) :export)
+               :energy-cost 0) :export)
