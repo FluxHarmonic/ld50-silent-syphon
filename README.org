@@ -2,6 +2,17 @@
 
 The theme for this Ludum Dare is *Delay the Inevitable*!
 
+* The Concept
+
+You are piloting a ship flying through enemy territory and your capacitors can no longer store energy.  You must survive as long as you can to have any hope of escape.
+
+To keep your ship running for longer, siphon energy from enemy ships, but be aware that movement and firing your weapon will cause energy to deplete faster!
+
+* Screenshots
+
+[[https://user-images.githubusercontent.com/79405/161440969-f4d752ca-a16d-402b-b7f0-90c2cd27e7f2.png]]
+[[https://user-images.githubusercontent.com/79405/161441263-f9d8307e-9d44-40de-8e5b-4f8d018a1258.png]]
+
 * Download The Game
 
 You can try out a development builds of the game here:
@@ -52,17 +63,26 @@ Here are the controls:
 - *J*: Siphon enemy energy
 - *K*: Fire weapon
 
-* The Concept
+* Future Asked Questions
 
-- Top-down space shooter game
-- Your ship is running out of energy
-- How long can you last until the ship runs out of energy?
-- You can siphon energy off of enemy ships
-- But you can't siphon off of ships that you destroy!
+** So why does the game look so basic?
 
-Name: Silent Syphon
+Ran out of time to make sprites for everything!  See also the next question
 
-Repo: https://github.com/FluxHarmonic/ld50-silent-syphon
+** What's interesting about this project?
+
+I wrote this game using [[https://github.com/mesche-lang/compiler][my own programming language Mesche]], derived from Scheme and written in C.  I also wrote the (basic) rendering and game engine library called [[https://github.com/substratic/engine/][Substratic Engine]].
+
+This game is the culmination of about 3 months of work on the Flux Harmonic YouTube channel where a lot of it was written live on stream!
+
+I also wrote 99% of this game on streams over the two days of the Compo, here is the YouTube playlist of the recordings:
+
+https://youtube.com/playlist?list=PLwranTcItp8tzf79DA_7ErGhxul3W1rZH
+
+Check out future streams here:
+
+- https://youtube.com/FluxHarmonicLive
+- https://twitch.tv/FluxHarmonicLive
 
 * Development Strategy
 
@@ -73,116 +93,128 @@ Repo: https://github.com/FluxHarmonic/ld50-silent-syphon
 
 * Tasks
 
-** DONE Get basic player ship rendering and moving using keyboard keys
+** Post-Submission Bugs
+
+Here are some tasks I'll tackle post-submission while voting is ongoing.
+
+*** TODO Fix crash in lose state
+
+*** TODO Fix GC issue causing a crash in longer games
+*** TODO Port to Windows
+
+** Completed During Compo
+
+*** DONE Get basic player ship rendering and moving using keyboard keys
 CLOSED: [2022-04-02 Sat 08:17]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 08:17]
 :END:
-** DONE Implement basic shooting (bullet particles)
+*** DONE Implement basic shooting (bullet particles)
 CLOSED: [2022-04-02 Sat 08:50]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 08:50]
 :END:
-** DONE Add basic enemy spawning
+*** DONE Add basic enemy spawning
 CLOSED: [2022-04-02 Sat 09:35]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 09:35]
 :END:
-** DONE Add shield and energy meters (basic HUD)
+*** DONE Add shield and energy meters (basic HUD)
 CLOSED: [2022-04-02 Sat 09:52]
-** DONE Add bullet collision detection
+*** DONE Add bullet collision detection
 CLOSED: [2022-04-02 Sat 10:42]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 10:42]
 :END:
-** DONE Add score display
+*** DONE Add score display
 CLOSED: [2022-04-02 Sat 13:28]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 13:28]
 :END:
-** DONE Update score based on kills
+*** DONE Update score based on kills
 CLOSED: [2022-04-02 Sat 13:28]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 13:28]
 :END:
-** DONE Add basic enemy AI (shoot at player, have predefined movement pattern)
+*** DONE Add basic enemy AI (shoot at player, have predefined movement pattern)
 CLOSED: [2022-04-02 Sat 14:18]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 14:18]
 :END:
-** DONE Create another more interesting enemy with more shield quanity
+*** DONE Create another more interesting enemy with more shield quanity
 CLOSED: [2022-04-02 Sat 14:18]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 14:18]
 :END:
-** DONE Add player shield damage
+*** DONE Add player shield damage
 CLOSED: [2022-04-02 Sat 17:24]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
 :END:
-** DONE Speed up the enemy spawning
+*** DONE Speed up the enemy spawning
 CLOSED: [2022-04-02 Sat 17:24]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-02 Sat 17:24]
 :END:
-** DONE Set up CI for the game
+*** DONE Set up CI for the game
 CLOSED: [2022-04-03 Sun 11:43]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 11:43]
 :END:
-** DONE Produce working game builds for Ubuntu 20.04
+*** DONE Produce working game builds for Ubuntu 20.04
 CLOSED: [2022-04-03 Sun 11:43]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 11:43]
 :END:
-** DONE Improve ship control
+*** DONE Improve ship control
 CLOSED: [2022-04-03 Sun 16:03]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 16:03]
 :END:
-** DONE Add energy depletion when moving and shooting
+*** DONE Add energy depletion when moving and shooting
 CLOSED: [2022-04-03 Sun 16:10]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 16:10]
 :END:
-** DONE Add a time counter for how long you stayed alive
+*** DONE Add a time counter for how long you stayed alive
 CLOSED: [2022-04-03 Sun 16:51]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 16:51]
 :END:
-** DONE Add energy siphoning (with scoring)
+*** DONE Add energy siphoning (with scoring)
 CLOSED: [2022-04-03 Sun 16:53]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 16:53]
 :END:
-** DONE Add a main menu with keyboard help
+*** DONE Add a main menu with keyboard help
 CLOSED: [2022-04-03 Sun 17:53]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 17:53]
 :END:
-** DONE Add indicators for shield and energy meters
+*** DONE Add indicators for shield and energy meters
 CLOSED: [2022-04-03 Sun 18:04]
 :LOGBOOK:
 - State "DONE"       from "TODO"       [2022-04-03 Sun 18:04]
 :END:
-
-** TODO Add pickup objects (shield, energy, maybe weapon?)
-** TODO Add manual shielding which also depletes
-** TODO Tweak configurations of existing enemies
-** TODO Maybe add a third enemy?
-** TODO Restrict gameplay to the visible area (sans HUD)
-** TODO Make basic game sprites
-** TODO The graphics look kinda huge on non-hidpi displays
-** TODO Add starfield renderer
+** Post-Compo Features
+*** TODO Add pickup objects (shield, energy, maybe weapon?)
+*** TODO Add manual shielding which also depletes
+*** TODO Tweak configurations of existing enemies
+*** TODO Maybe add a third enemy?
+*** TODO Restrict gameplay to the visible area (sans HUD)
+*** TODO Make basic game sprites
+*** TODO The graphics look kinda huge on non-hidpi displays
+*** TODO Add starfield renderer
+*** TODO High score table with persistence
 
 * Mesche Issues
 
 I need to investigate these issues:
 
+** TODO Investigate heap overflow or bad tail call patching in =update-player='s old incarnation
+** TODO Investigate heap overflow with =begin= in =player.msc= (maybe related to above)
 ** TODO Heap overflow in a nested =if= -> =begin= in =update-player=, is the chunk too big?
 ** TODO Circular module reference issues with =syphon player= and =syphon weapon=
 ** TODO Implement better pattern for updating record field values (pass lambda to mutate)
 ** TODO Make it possible to set default value for keyword arguments
-** TODO Somehow record instances are not initialized correctly when given no keyword args
-** TODO Investigate heap overflow with =begin= in =player.msc=
-** TODO Investigate heap overflow or bad tail call patching in =update-player='s old incarnation
+** TODO Record instances are not initialized correctly when keyword args are omitted
