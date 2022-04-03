@@ -369,6 +369,7 @@
                          "WSAD moves your ship"
                          "J siphons energy / K fires the weapon"
                          "All actions drain energy, try not to deplete!"
+                         ""
                          "(C) 2022 By David Wilson / Flux Harmonic")))
     (if (pair? lines)
         (begin
