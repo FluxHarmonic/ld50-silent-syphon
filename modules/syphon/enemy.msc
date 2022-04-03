@@ -69,7 +69,7 @@
                 :y y
                 :base-x x
                 :size size
-                :shield 10
+                :shield 20
                 :score 100
                 :sphere (make-sphere x y (/ size 2))
                 :weapon blaster-weapon
