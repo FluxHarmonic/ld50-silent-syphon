@@ -33,7 +33,9 @@ jobs:
         run: |
           rm -rf dist
           ./bin/mesche build dist --config release
-          zip -r silent-syphon-linux.zip dist/*
+          cd dist
+          zip -r ../silent-syphon-linux.zip *
+          cd ..
 
       # - name: Upload Build Artifact
       #   uses: actions/upload-artifact@v2
