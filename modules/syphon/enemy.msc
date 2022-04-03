@@ -17,7 +17,7 @@
 
 ;; This will be adjusted over time
 (define enemy-spawn-interval-base 0.5)
-(define enemy-spawn-interval-range 3.0)
+(define enemy-spawn-interval-range 2.0)
 (define enemy-spawn-interval-scale 1.0)
 (define enemy-spawn-time 0)
 
