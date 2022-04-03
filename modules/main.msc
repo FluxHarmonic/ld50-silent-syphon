@@ -121,7 +121,7 @@
 (define (handle-prompt-input input-event)
   (if (input-event-key-down? input-event)
       (if (equal? (input-event-key-code input-event) input-key-code-y)
-          (display "PLAY AGAIN!\n")
+          (set! current-game (initialize-game))
           (if (equal? (input-event-key-code input-event) input-key-code-n)
               (display "GO BACK TO MENU!\n")))))
 
@@ -129,7 +129,9 @@
   (let next-event ((input-event (input-event-take input-state)))
     (if input-event
         (begin
-          (handle-player-input (game-player game) input-event)
+          (if (equal? (game-state current-game) 'playing)
+              (handle-player-input (game-player game) input-event)
+              (handle-prompt-input input-event))
           (next-event (input-event-take input-state))))))
 
 ;;; -- Game Loop --
