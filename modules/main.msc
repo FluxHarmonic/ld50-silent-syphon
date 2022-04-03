@@ -132,7 +132,9 @@
       (if (equal? (input-event-key-code input-event) input-key-code-y)
           (set! current-game (initialize-game))
           (if (equal? (input-event-key-code input-event) input-key-code-n)
-              (display "GO BACK TO MENU!\n")))))
+              (begin
+                (set! current-updater menu-updater)
+                (set! current-renderer menu-renderer))))))
 
 (define (handle-input-events game)
   (let next-event ((input-event (input-event-take input-state)))
@@ -259,9 +261,6 @@
 (define result-width nil)
 
 (define (game-renderer renderer)
-  ;; Clear the screen
-  (renderer-clear renderer 0 0 0)
-
   ;; Render the bullets
   (render-bullets renderer (game-bullets current-game))
 
@@ -303,7 +302,78 @@
                      (- (window-width window) 220)
                      60))))
 
+(define title-text "Silent Syphon")
+(define title-width (font-text-width result-font title-text))
+
+(define start-text "Press Space to Start")
+(define start-width (font-text-width prompt-font start-text))
+
+(define quit-text "Q to Quit")
+(define quit-width (font-text-width prompt-font quit-text))
+
+(define (menu-updater time-delta)
+  (let next-event ((input-event (input-event-take input-state)))
+    (if input-event
+        (if (input-event-key-down? input-event)
+            (if (equal? (input-event-key-code input-event)
+                        input-key-code-space)
+                (begin
+                  (set! current-updater game-updater)
+                  (set! current-renderer game-renderer))
+                (not (equal? (input-event-key-code input-event)
+                             input-key-code-q)))
+            (next-event (input-event-take input-state)))
+        t)))
+
+(define (menu-renderer renderer)
+  (render-text renderer
+               result-font
+               title-text
+               (- (/ (window-width window) 2)
+                  (/ title-width 2))
+               150)
+
+  (render-text renderer
+               prompt-font
+               start-text
+               (- (/ (window-width window) 2)
+                  (/ start-width 2))
+               275)
+
+  (render-text renderer
+               prompt-font
+               quit-text
+               (- (/ (window-width window) 2)
+                  (/ quit-width 2))
+               350)
+
+  (let next-line ((y 400)
+                  (lines
+                   (list "Instructions:"
+                         "WSAD moves your ship"
+                         "J siphons energy / K fires the weapon"
+                         "All actions drain energy, try not to deplete!"
+                         "(C) 2022 By David Wilson / Flux Harmonic")))
+    (if (pair? lines)
+        (begin
+          (render-text renderer
+                       small-font
+                       (car lines)
+                       200
+                       y)
+          (next-line (+ y 50)
+                     (cdr lines))))))
+
+(define current-updater menu-updater)
+(define current-renderer menu-renderer)
+
+
 ;; This will run the game functions until the updater returns nil
 (run-engine-loop :renderer renderer
-                 :update-func game-updater
-                 :render-func game-renderer)
+                 :update-func (lambda (time-delta)
+                                (if (not (window-needs-close? window))
+                                    (current-updater time-delta)))
+                 :render-func (lambda (renderer)
+                                ;; Clear the screen
+                                (renderer-clear renderer 0 0 0)
+                                (current-renderer renderer)))

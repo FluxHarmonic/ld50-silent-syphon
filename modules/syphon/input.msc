@@ -42,11 +42,10 @@
   (controller-siphon-set! controller
                           (input-event-key-down? input-event)))
 
-
 ;; Controls:
 ;; WSAD for directional
-;; J to shoot
-;; K to siphon
+;; J to siphon
+;; K to shoot
 
 (define key-mappings
   (list (cons input-key-code-w up-command)
