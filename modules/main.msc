@@ -215,45 +215,46 @@
 
               (if (not (equal? (player-state (game-player current-game))
                                'alive))
-                  (end-game current-game (player-state (game-player current-game))))
+                  (end-game current-game (player-state (game-player current-game)))
+                  (begin
 
-              ;; Update bullets
-              (game-bullets-set! current-game
-                                 (update-bullets (game-bullets current-game)
-                                                 time-delta))
+                    ;; Update bullets
+                    (game-bullets-set! current-game
+                                       (update-bullets (game-bullets current-game)
+                                                       time-delta))
 
-              ;; Spawn and update enemies
-              (game-enemies-set! current-game
-                                 (spawn-enemies (game-enemies current-game)
-                                                (game-level-time current-game)
-                                                max-level-time
-                                                time-delta
-                                                window))
-              (game-enemies-set! current-game
-                                 (update-enemies (game-enemies current-game)
-                                                 (lambda (bullet)
-                                                   (game-bullets-set! current-game
-                                                                      (cons bullet
-                                                                            (game-bullets current-game))))
-                                                 time-delta
-                                                 window))
+                    ;; Spawn and update enemies
+                    (game-enemies-set! current-game
+                                       (spawn-enemies (game-enemies current-game)
+                                                      (game-level-time current-game)
+                                                      max-level-time
+                                                      time-delta
+                                                      window))
+                    (game-enemies-set! current-game
+                                       (update-enemies (game-enemies current-game)
+                                                       (lambda (bullet)
+                                                         (game-bullets-set! current-game
+                                                                            (cons bullet
+                                                                                  (game-bullets current-game))))
+                                                       time-delta
+                                                       window))
 
-              ;; Siphon energy if necessary
-              (if (controller-siphon (game-controller current-game))
-                  (siphon-energy current-game
-                                 (game-player current-game)
-                                 (game-enemies current-game)
-                                 time-delta))
+                    ;; Siphon energy if necessary
+                    (if (controller-siphon (game-controller current-game))
+                        (siphon-energy current-game
+                                       (game-player current-game)
+                                       (game-enemies current-game)
+                                       time-delta))
 
-              ;; Check for collisions
-              (check-collisions (game-player current-game)
-                                (game-enemies current-game)
-                                (game-bullets current-game)
-                                (lambda (enemy)
-                                  ;; Give the player some score
-                                  (game-score-total-set! current-game
-                                                         (+ (game-score-total current-game)
-                                                            (enemy-score enemy)))))
+                    ;; Check for collisions
+                    (check-collisions (game-player current-game)
+                                      (game-enemies current-game)
+                                      (game-bullets current-game)
+                                      (lambda (enemy)
+                                        ;; Give the player some score
+                                        (game-score-total-set! current-game
+                                                               (+ (game-score-total current-game)
+                                                                  (enemy-score enemy)))))))
 
               ;; Update the HUD
               (update-hud current-game time-delta))
@@ -341,6 +342,14 @@
             (next-event (input-event-take input-state)))
         t)))
 
+(define menu-screen-lines
+  (list "Instructions:"
+        "WSAD moves your ship"
+        "J siphons energy / K fires the weapon"
+        "All actions drain energy, try not to deplete!"
+        ""
+        "(C) 2022 By David Wilson / Flux Harmonic"))
+
 (define (menu-renderer renderer)
   (render-text renderer
                result-font
@@ -363,14 +372,9 @@
                   (/ quit-width 2))
                350)
 
-  (let next-line ((y 400)
-                  (lines
-                   (list "Instructions:"
-                         "WSAD moves your ship"
-                         "J siphons energy / K fires the weapon"
-                         "All actions drain energy, try not to deplete!"
-                         ""
-                         "(C) 2022 By David Wilson / Flux Harmonic")))
+  (let next-line ((renderer renderer)
+                  (y 400)
+                  (lines menu-screen-lines))
     (if (pair? lines)
         (begin
           (render-text renderer
@@ -378,7 +382,8 @@
                        (car lines)
                        200
                        y)
-          (next-line (+ y 50)
+          (next-line renderer
+                     (+ y 50)
                      (cdr lines))))))
 
 (define current-updater menu-updater)
