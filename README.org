@@ -97,9 +97,17 @@ Check out future streams here:
 
 Here are some tasks I'll tackle post-submission while voting is ongoing.
 
-*** TODO Fix crash in lose state
+*** DONE Fix crash in lose state
+CLOSED: [2022-04-06 Wed 09:30]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-06 Wed 09:30]
+:END:
 
-*** TODO Fix GC issue causing a crash in longer games
+*** DONE Fix GC issue causing a crash in longer games
+CLOSED: [2022-04-06 Wed 09:31]
+:LOGBOOK:
+- State "DONE"       from "TODO"       [2022-04-06 Wed 09:31]
+:END:
 *** TODO Port to Windows
 
 ** Completed During Compo
